@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>WorldVest Agent</title>
+<meta name="theme-color" content="#0d1626" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Albert+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+
+<style>
+  /* Layout: a night trading floor. Wordmark left, the agent standing large on the right,
+     a live ticker tape along the floor line; scroll down for the story; chat slides in from the right. */
+  :root {
+    color-scheme: dark;
+    --ink: #0d1626;        /* night floor navy, page ground */
+    --ink-2: #15233a;      /* raised panels */
+    --ink-3: #1d2f4c;      /* inputs, hover */
+    --paper: #ece6d8;      /* primary text, warm like monitor glow on paper */
+    --haze: #8f9bb0;       /* secondary text */
+    --brass: #c9a45c;      /* the one accent: brass of the old trading boards */
+    --brass-soft: rgba(201,164,92,0.18);
+    --up: #5bd6a0;         /* quote up */
+    --down: #ec7563;       /* quote down */
+    --line: rgba(236,230,216,0.12);
+
+    --display: 'Bodoni Moda', 'Didot', 'Bodoni 72', Georgia, serif;
+    --body: 'Albert Sans', 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--ink); color: var(--paper);
+    font-family: var(--body); font-size: 16px; line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font-family: inherit; }
+  :focus-visible { outline: 2px solid var(--brass); outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+    html { scroll-behavior: auto; }
+  }
+
+  /* ============ HERO ============ */
+  .hero {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: grid; grid-template-rows: auto 1fr auto;
+    background:
+      linear-gradient(180deg, rgba(13,22,38,0.7) 0%, rgba(13,22,38,0.2) 35%, rgba(13,22,38,0.35) 70%, rgba(13,22,38,0.95) 100%),
+      radial-gradient(ellipse 80% 70% at 50% 50%, transparent 40%, rgba(13,22,38,0.55) 100%),
+      url('trading-floor.jpg') center 35% / cover no-repeat,
+      radial-gradient(ellipse 34% 20% at 50% 36%, rgba(47,224,138,0.24), transparent 70%),
+      radial-gradient(ellipse 28% 40% at 8% 40%, rgba(46,110,200,0.28), transparent 70%),
+      radial-gradient(ellipse 28% 40% at 92% 40%, rgba(46,110,200,0.24), transparent 70%),
+      radial-gradient(ellipse 10% 6% at 34% 54%, rgba(236,80,80,0.18), transparent 70%),
+      radial-gradient(ellipse 10% 6% at 64% 54%, rgba(236,80,80,0.16), transparent 70%),
+      radial-gradient(ellipse 60% 14% at 50% 96%, rgba(201,164,92,0.16), transparent 70%),
+      repeating-linear-gradient(90deg, rgba(120,170,230,0.05) 0 80px, transparent 80px 96px),
+      #0b1424;
+  }
+
+  /* ---- Title line ---- */
+  .titlebar {
+    display: flex; align-items: center; gap: clamp(14px, 2vw, 24px); flex-wrap: wrap;
+    padding: 22px clamp(16px, 4vw, 56px) 18px;
+    border-bottom: 1px solid var(--line);
+  }
+  .titlebar h1 { display: flex; align-items: baseline; gap: clamp(12px, 2vw, 22px); flex-wrap: wrap; margin: 0; }
+  .wordmark {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(44px, 6.4vw, 92px); line-height: 0.95; letter-spacing: -0.03em;
+  }
+  .subtitle {
+    font-family: var(--body); font-weight: 300;
+    font-size: clamp(17px, 1.9vw, 26px); color: var(--brass);
+  }
+  .titlebar .links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; }
+  .titlebar .links a { color: var(--haze); text-decoration: none; }
+  .titlebar .links a:hover { color: var(--paper); }
+
+  /* ---- Stage: she stands alone; clicking her opens the chat on the left ---- */
+  .stage {
+    display: flex; align-items: flex-end;
+    padding: clamp(20px, 3vw, 36px) clamp(16px, 4vw, 56px) 0;
+  }
+  .agent-wrap { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
+
+  /* ---- The agent ---- */
+  .agent {
+    position: relative;
+    height: min(74vh, 680px); aspect-ratio: 3 / 4; max-width: 100%;
+    border: none; padding: 0; background: none; cursor: pointer; color: inherit;
+  }
+  .agent::before {
+    content: ""; position: absolute; inset: 8% 4% 0; z-index: -1;
+    background: radial-gradient(ellipse 50% 45% at 50% 45%, rgba(201,164,92,0.28), transparent 70%);
+    filter: blur(10px);
+  }
+  .agent img {
+    width: 100%; height: 100%; object-fit: contain; object-position: bottom center; display: block;
+    filter: drop-shadow(0 20px 40px rgba(0,0,0,0.55));
+    transition: transform .4s cubic-bezier(.2,.7,.2,1);
+  }
+  .agent:hover img, .agent:focus-visible img { transform: scale(1.015); }
+  .agent.speaking::before { animation: halo 1.6s ease-in-out infinite; }
+  @keyframes halo { 50% { opacity: .55; } }
+
+  .agent-placeholder {
+    position: absolute; inset: 6% 10% 0; display: none;
+    flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    border: 1px dashed rgba(201,164,92,0.45); border-bottom: none; border-radius: 200px 200px 0 0;
+    background: linear-gradient(180deg, rgba(201,164,92,0.08), rgba(13,22,38,0.2));
+    color: var(--haze); font-size: 14px; text-align: center; padding: 24px;
+  }
+  .agent.no-photo .agent-placeholder { display: flex; }
+  .agent.no-photo img { display: none; }
+
+  .bubble {
+    position: absolute; top: 12%; left: -4%;
+    background: var(--paper); color: var(--ink);
+    font-size: 15px; font-weight: 500; line-height: 1.35;
+    padding: 12px 16px; border-radius: 18px 18px 18px 4px; max-width: 220px; text-align: left;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+    animation: bubbleIn .6s 1s both cubic-bezier(.2,.7,.2,1);
+    transition: opacity .25s;
+  }
+  .stage.chatting .bubble { opacity: 0; pointer-events: none; }
+  @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
+
+  /* ---- Chat panel ---- */
+  .chat {
+    height: min(74vh, 680px); min-height: 440px; min-width: 0;
+    display: flex; flex-direction: column; margin-bottom: 20px;
+    flex: 0 0 0px; margin-right: 0; opacity: 0; visibility: hidden;
+    transition: flex-basis .55s cubic-bezier(.2,.7,.2,1), margin-right .55s cubic-bezier(.2,.7,.2,1), opacity .35s .15s, visibility 0s .55s;
+    background: rgba(21,35,58,0.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--line); border-radius: 22px; overflow: hidden;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+  }
+  .stage.chatting .chat {
+    flex-basis: min(580px, 52%); margin-right: clamp(20px, 3vw, 48px);
+    opacity: 1; visibility: visible;
+    transition: flex-basis .55s cubic-bezier(.2,.7,.2,1), margin-right .55s cubic-bezier(.2,.7,.2,1), opacity .35s .15s, visibility 0s;
+  }
+  .c-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .c-title { flex: 1; min-width: 0; }
+  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.2; }
+  .c-title span { font-size: 13px; color: var(--haze); }
+  .c-title .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--haze); margin-right: 6px; }
+  .c-title .dot.live { background: var(--up); }
+  .icon-btn {
+    width: 36px; height: 36px; display: grid; place-items: center; flex-shrink: 0;
+    border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--haze); cursor: pointer;
+  }
+  .icon-btn:hover { color: var(--paper); border-color: var(--haze); }
+  .icon-btn svg { width: 16px; height: 16px; }
+
+  .confirm {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 16px; background: rgba(236,117,99,0.1); border-bottom: 1px solid var(--line); font-size: 14px;
+  }
+  .confirm span { flex: 1; min-width: 0; }
+  .confirm button { border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--paper); }
+  .confirm .danger { background: var(--down); border-color: var(--down); color: #2a0a05; font-weight: 600; }
+
+  .c-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
+  .m { max-width: 92%; min-width: 0; }
+  .m .who { font-size: 12px; color: var(--haze); margin-bottom: 4px; }
+  .m .txt { font-size: 15px; line-height: 1.6; word-break: break-word; }
+  .m.user { align-self: flex-end; }
+  .m.user .who { text-align: right; }
+  .m.user .txt { background: var(--ink-3); padding: 10px 14px; border-radius: 16px 16px 4px 16px; }
+  .m.agent .txt p { margin: 0 0 10px; }
+  .m.agent .txt p:last-child { margin: 0; }
+  .m.agent .txt ul { margin: 4px 0 10px; padding-left: 20px; }
+  .m.agent .txt strong { color: #fff; font-weight: 600; }
+  .m.agent .txt a { color: var(--brass); }
+  .m.agent .who { color: var(--brass); }
+
+  .typing { display: inline-flex; gap: 5px; padding: 6px 0; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--brass); animation: blip 1.3s infinite; }
+  .typing i:nth-child(2) { animation-delay: .15s; }
+  .typing i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blip { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
+
+  .c-empty { color: var(--haze); font-size: 15px; }
+  .c-empty p { margin: 0 0 14px; }
+
+  .c-foot { border-top: 1px solid var(--line); padding: 12px 16px; display: grid; gap: 8px; }
+  .c-foot input, .c-foot textarea {
+    width: 100%; background: var(--ink); color: var(--paper);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 16px; outline: none;
+  }
+  .c-foot input:focus, .c-foot textarea:focus { border-color: var(--brass); }
+  .c-foot input { font-size: 15px; padding: 8px 14px; }
+  .c-row { display: flex; gap: 10px; align-items: flex-end; }
+  .c-row textarea { flex: 1; min-width: 0; resize: none; min-height: 92px; max-height: 220px; line-height: 1.5; padding: 12px 16px; font-size: 16px; }
+  .btn-primary {
+    background: var(--brass); color: #1a1406; border: none; cursor: pointer;
+    font-size: 15px; font-weight: 600; padding: 12px 20px; border-radius: 999px; flex-shrink: 0;
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(201,164,92,0.35); }
+  .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+  .c-note { font-size: 12px; color: var(--haze); }
+  .chat.flash { animation: flash .9s ease; }
+  @keyframes flash { 30% { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-soft), 0 30px 80px rgba(0,0,0,0.35); } }
+
+  /* ---- Ticker tape on the floor line ---- */
+  .tape {
+    border-top: 1px solid var(--line); background: rgba(8,14,26,0.85);
+    overflow: hidden; white-space: nowrap; position: relative;
+    font-size: 14px; font-variant-numeric: tabular-nums;
+  }
+  .tape-track { display: inline-flex; gap: 40px; padding: 12px 0; animation: tape 60s linear infinite; }
+  .tape:hover .tape-track { animation-play-state: paused; }
+  @keyframes tape { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .q { display: inline-flex; gap: 10px; align-items: baseline; }
+  .q b { font-weight: 600; color: var(--paper); }
+  .q .px { color: var(--haze); }
+  .q .up { color: var(--up); }
+  .q .down { color: var(--down); }
+  .tape-note {
+    position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center;
+    padding: 0 16px 0 40px; font-size: 12px; color: var(--haze);
+    background: linear-gradient(90deg, transparent, rgba(8,14,26,0.95) 30%);
+  }
+
+  /* ============ ABOUT ============ */
+  .about {
+    padding: clamp(64px, 10vw, 128px) clamp(16px, 4vw, 56px);
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    gap: clamp(32px, 6vw, 96px); max-width: 1240px; margin: 0 auto;
+  }
+  .about h2 {
+    font-family: var(--display); font-weight: 400;
+    font-size: clamp(36px, 5vw, 60px); line-height: 1.05; letter-spacing: -0.02em;
+    margin: 0 0 28px; text-wrap: balance;
+  }
+  .about p { color: var(--haze); max-width: 60ch; margin: 0 0 18px; font-size: 17px; }
+  .about p strong { color: var(--paper); font-weight: 500; }
+
+  .sources { border-top: 1px solid var(--line); }
+  .sources h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 24px 0 8px; }
+  .sources dl { margin: 0; }
+  .sources dt { color: var(--paper); font-weight: 500; margin-top: 18px; }
+  .sources dd { color: var(--haze); margin: 4px 0 0; font-size: 15px; }
+
+  .asks {
+    grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 40px;
+    display: grid; grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr); gap: 32px; align-items: start;
+  }
+  .asks h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; }
+  .ask-list { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ask {
+    background: transparent; color: var(--paper); cursor: pointer;
+    border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px; font-size: 15px; text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+  .ask:hover { border-color: var(--brass); background: var(--brass-soft); }
+
+  footer {
+    padding: 28px clamp(16px, 4vw, 56px) calc(28px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--line); color: var(--haze); font-size: 14px;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--haze); }
+
+  /* ============ MOBILE ============ */
+  @media (max-width: 860px) {
+    .titlebar .links { display: none; }
+    .stage { flex-direction: column; align-items: stretch; padding-top: 16px; }
+    .agent-wrap { order: 1; flex: none; }
+    .agent { height: min(64vh, 560px); transition: height .45s cubic-bezier(.2,.7,.2,1); }
+    .stage.chatting .agent { height: min(30vh, 260px); }
+    .chat { order: 2; display: none; flex: none; height: 66vh; height: 66dvh; min-height: 420px; }
+    .stage.chatting .chat { display: flex; flex-basis: auto; margin-right: 0; }
+    .bubble { left: auto; right: -2%; top: 6%; font-size: 13px; max-width: 160px; padding: 10px 12px; }
+    .about { grid-template-columns: 1fr; }
+    .asks { grid-template-columns: 1fr; gap: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top">
+  <div class="titlebar">
+    <h1><span class="wordmark">WorldVest</span><span class="subtitle">Agentic Intelligence</span></h1>
+    <nav class="links">
+      <a href="#about">About</a>
+      <a href="https://worldvest.xyz" target="_blank" rel="noopener">Watchlist</a>
+    </nav>
+  </div>
+
+  <div class="stage">
+    <!-- Chat: hidden until she is clicked -->
+    <section class="chat" id="chat" aria-label="Chat with the agent" aria-hidden="true">
+      <div class="c-head">
+        <div class="c-title">
+          <strong>WorldVest Agent</strong>
+          <span><i class="dot" id="conn-dot"></i><span id="conn-text">Connecting…</span></span>
+        </div>
+        <button class="icon-btn" type="button" onclick="askClear()" title="Clear the shared chat" aria-label="Clear the shared chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
+        </button>
+        <button class="icon-btn" type="button" onclick="closeChat()" title="Close chat" aria-label="Close chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </div>
+
+      <div class="confirm" id="confirm" hidden>
+        <span>Clear the conversation for everyone?</span>
+        <button type="button" onclick="cancelClear()">Keep it</button>
+        <button type="button" class="danger" onclick="clearChat()">Clear chat</button>
+      </div>
+
+      <div class="c-body" id="c-body"></div>
+
+      <div class="c-foot">
+        <input id="name" placeholder="Your name" maxlength="24" autocomplete="nickname" />
+        <div class="c-row">
+          <textarea id="input" rows="3" placeholder="Ask about a stock, the week ahead, a strategy…"></textarea>
+          <button class="btn-primary" id="send-btn" type="button" onclick="send()">Send</button>
+        </div>
+        <div class="c-note">Shared with the group · Not financial advice</div>
+      </div>
+    </section>
+
+    <!-- The agent on the right -->
+    <div class="agent-wrap">
+    <button class="agent" id="agent" type="button" onclick="openChat()" aria-label="Talk to the WorldVest agent">
+      <img src="agent.png" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
+      <div class="agent-placeholder" aria-hidden="true">
+        <span>Your agent photo goes here<br><small>agent.png</small></span>
+      </div>
+      <span class="bubble">Click me to talk markets.</span>
+    </button>
+    </div>
+  </div>
+
+  <div class="tape" aria-label="Group watchlist prices">
+    <div class="tape-track" id="tape-track"></div>
+    <div class="tape-note" id="tape-note">Sample prices</div>
+  </div>
+</header>
+
+<!-- ============ ABOUT ============ -->
+<main>
+  <section class="about" id="about">
+    <div>
+      <h2>A private desk for a few friends who follow markets</h2>
+      <p>WorldVest started as a shared watchlist and chat at <strong>worldvest.xyz</strong>. This page adds an analyst to the room.</p>
+      <p>Ask her about the week ahead, why a stock moved, or how a strategy works, from covered calls to position sizing. She answers with real numbers from our watchlist and current news, and she can go as deep as you like.</p>
+      <p>There is <strong>one shared conversation</strong>. Everyone in the group sees it, and she remembers the last 12 messages, so she can pick up a thread someone else started yesterday.</p>
+      <p>Her answers are analysis to think with, not personal financial advice.</p>
+    </div>
+
+    <div class="sources">
+      <h3>What she works from</h3>
+      <dl>
+        <dt>Our watchlist</dt>
+        <dd>Every ticker we track, with live prices. Stocks update about every 30 seconds, crypto about every 5 minutes.</dd>
+        <dt>Today's headlines</dt>
+        <dd>The top market stories of the day, pulled fresh each time you ask.</dd>
+        <dt>Web search</dt>
+        <dd>For anything newer than her training: earnings dates, Fed meetings, CPI and jobs reports, breaking news.</dd>
+        <dt>The conversation</dt>
+        <dd>The last 12 messages from everyone, so follow-up questions just work.</dd>
+      </dl>
+    </div>
+
+    <div class="asks">
+      <h3>Try asking</h3>
+      <div class="ask-list" id="ask-list"></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>© WorldVest 2026</span>
+  <a href="https://worldvest.xyz" target="_blank" rel="noopener">Open the watchlist</a>
+</footer>
+
+<script>
+  // ================= CONFIG =================
+  const AGENT_URL = "https://worldvest-agent.YOUR-SUBDOMAIN.workers.dev"; // your Cloudflare Worker
+  const FINNHUB_KEY = "d7ok9vhr01qsb7bf9bdgd7ok9vhr01qsb7bf9be0";
+  const firebaseConfig = {
+    apiKey: "AIzaSyBZar3sZBOEe__EGqh_IqTszD8CzeKJYYY",
+    authDomain: "watchlist-d9ade.firebaseapp.com",
+    projectId: "watchlist-d9ade",
+    storageBucket: "watchlist-d9ade.firebasestorage.app",
+    messagingSenderId: "927853955548",
+    appId: "1:927853955548:web:dedd485e291d3804542719",
+    measurementId: "G-9QNQ8ZVLSR"
+  };
+  const CHAT_NODE = "agentchat"; // separate from WorldVest's "chat" board
+  const HISTORY_LEN = 12;
+
+  // Password gate is OFF while previewing. Turned on later.
+  const REQUIRE_PASSWORD = false;
+
+  const ASKS = [
+    "What should we watch this week?",
+    "How is our watchlist doing today?",
+    "Why did the market move today?",
+    "Explain a covered call with real numbers",
+    "How big should a single position be?",
+    "Bull and bear case for our biggest holding",
+  ];
+
+  // Shown in the tape only until real prices load
+  const SAMPLE = [
+    ["AAPL", 258.40, 0.42], ["NVDA", 182.15, 1.87], ["MSFT", 512.30, -0.31], ["TSLA", 431.05, -2.14],
+    ["AMZN", 221.70, 0.66], ["BTC", 118450, 1.12], ["ETH", 4385, -0.84], ["SOL", 221.4, 2.35],
+  ];
+
+  // ================= HELPERS =================
+  const esc = s => String(s ?? '').replace(/[<>&"']/g, c => ({ '<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;' }[c]));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+  };
+  const fmtPrice = v => {
+    if (v == null || isNaN(v)) return '—';
+    const n = Number(v);
+    return '$' + n.toLocaleString(undefined, { minimumFractionDigits: n < 1 ? 4 : 2, maximumFractionDigits: n < 1 ? 6 : 2 });
+  };
+  const fmtPct = v => (v == null || isNaN(v)) ? '—' : (v >= 0 ? '+' : '') + Number(v).toFixed(2) + '%';
+  const isCrypto = s => s.startsWith('CG:') || s.includes(':');
+
+  // ================= TICKER TAPE =================
+  function renderTape(rows, isSample) {
+    const one = rows.map(([sym, px, pct]) => `
+      <span class="q"><b>${esc(sym)}</b><span class="px">${fmtPrice(px)}</span>
+      <span class="${pct >= 0 ? 'up' : 'down'}">${fmtPct(pct)}</span></span>`).join('');
+    document.getElementById('tape-track').innerHTML = one + one; // doubled for a seamless loop
+    document.getElementById('tape-note').hidden = !isSample;
+  }
+  renderTape(SAMPLE, true);
+
+  // ================= ASK CHIPS =================
+  document.getElementById('ask-list').innerHTML = ASKS
+    .map(q => `<button class="ask" type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('');
+  document.getElementById('ask-list').addEventListener('click', e => {
+    const b = e.target.closest('.ask');
+    if (b) { openChat(); document.getElementById('input').value = b.dataset.q; send(); }
+  });
+
+  // ================= FIREBASE =================
+  let db = null;
+  let connected = false;
+  let watchlist = {}, prices = {}, messages = [], headlines = [], headlinesAt = 0;
+  let pending = false;
+
+  function setConn(ok, text) {
+    connected = ok;
+    document.getElementById('conn-dot').classList.toggle('live', ok);
+    document.getElementById('conn-text').textContent = text;
+  }
+
+  function connect() {
+    if (!window.firebase) { setConn(false, 'Preview · not connected'); renderChat(); return; }
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      firebase.auth().signInAnonymously().then(() => {
+        setConn(true, 'Online · reads our watchlist');
+        db.ref('watchlist').on('value', s => { watchlist = s.val() || {}; updateTape(); });
+        db.ref('prices').on('value', s => { prices = s.val() || {}; updateTape(); });
+        db.ref(CHAT_NODE).limitToLast(200).on('value', s => {
+          messages = Object.entries(s.val() || {})
+            .map(([key, m]) => ({ key, ...m }))
+            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          renderChat();
+        });
+      }).catch(err => { console.warn(err); setConn(false, 'Could not sign in to the database'); renderChat(); });
+    } catch (e) { console.warn(e); setConn(false, 'Preview · not connected'); renderChat(); }
+  }
+
+  function displaySym(sym) {
+    const w = watchlist[sym] || {};
+    if (w.tickerLabel) return w.tickerLabel;
+    if (sym.startsWith('CG:')) return sym.slice(3).toUpperCase();
+    return sym;
+  }
+
+  function updateTape() {
+    const rows = Object.keys(watchlist)
+      .filter(s => prices[s] && prices[s].price)
+      .map(s => [displaySym(s), prices[s].price, Number(prices[s].percent) || 0]);
+    if (rows.length) renderTape(rows, false);
+  }
+
+  async function fetchHeadlines() {
+    if (headlines.length && Date.now() - headlinesAt < 5 * 60 * 1000) return;
+    try {
+      const res = await fetch(`https://finnhub.io/api/v1/news?category=general&token=${FINNHUB_KEY}`);
+      const items = await res.json();
+      headlines = (items || []).filter(i => i.headline).slice(0, 8).map(i => ({
+        headline: i.headline, source: i.source,
+        hoursAgo: i.datetime ? Math.max(0, Math.round((Date.now() / 1000 - i.datetime) / 3600)) : null,
+      }));
+      headlinesAt = Date.now();
+    } catch (e) { console.warn('headlines failed', e); }
+  }
+
+  function buildSnapshot() {
+    const lines = ['WATCHLIST (live):'];
+    const syms = Object.keys(watchlist);
+    if (!syms.length) lines.push('  (empty)');
+    for (const sym of syms) {
+      const w = watchlist[sym] || {}, p = prices[sym] || {};
+      const age = p.updatedAt ? `, updated ${Math.round((Date.now() - p.updatedAt) / 60000)}m ago` : '';
+      lines.push(`  ${displaySym(sym)}${w.name ? ` (${w.name})` : ''} [${isCrypto(sym) ? 'crypto' : 'stock'}]: ${fmtPrice(p.price)}, 1D ${fmtPct(p.percent)}${age}`);
+    }
+    lines.push('', "TODAY'S HEADLINES:");
+    if (!headlines.length) lines.push('  (unavailable)');
+    headlines.forEach(h => lines.push(`  - ${h.headline} (${h.source}${h.hoursAgo != null ? `, ${h.hoursAgo}h ago` : ''})`));
+    return lines.join('\n');
+  }
+
+  // ================= CHAT UI =================
+  // Clicking her opens the chat on the left; she moves over to make room.
+  function openChat() {
+    const stage = document.querySelector('.stage');
+    const chat = document.getElementById('chat');
+    const already = stage.classList.contains('chatting');
+    stage.classList.add('chatting');
+    chat.setAttribute('aria-hidden', 'false');
+    renderChat();
+    document.getElementById('top').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const nameEl = document.getElementById('name');
+    setTimeout(() => (nameEl.value ? document.getElementById('input') : nameEl).focus({ preventScroll: true }), already ? 0 : 450);
+  }
+  function closeChat() {
+    document.querySelector('.stage').classList.remove('chatting');
+    document.getElementById('chat').setAttribute('aria-hidden', 'true');
+    document.getElementById('agent').focus({ preventScroll: true });
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.querySelector('.stage').classList.contains('chatting')) closeChat();
+  });
+
+  function renderMarkdown(text) {
+    const inline = s => s
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    let html = '', inList = false, para = [];
+    const flush = () => { if (para.length) { html += `<p>${inline(para.join('<br>'))}</p>`; para = []; } };
+    for (const line of esc(text).split('\n')) {
+      const li = line.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)/);
+      const h = line.match(/^\s*#{1,4}\s+(.*)/);
+      if (li) { flush(); if (!inList) { html += '<ul>'; inList = true; } html += `<li>${inline(li[1])}</li>`; continue; }
+      if (inList) { html += '</ul>'; inList = false; }
+      if (h) { flush(); html += `<p><strong>${inline(h[1])}</strong></p>`; }
+      else if (!line.trim()) flush();
+      else para.push(line);
+    }
+    if (inList) html += '</ul>';
+    flush();
+    return html;
+  }
+
+  function renderChat() {
+    const body = document.getElementById('c-body');
+    if (!messages.length && !pending) {
+      body.innerHTML = `<div class="c-empty">
+        <p>Hi. I can see our watchlist and today's headlines, and I can search the web for anything newer.</p>
+        <p>Ask about a ticker, the week ahead, or a strategy you're weighing. Everyone in the group shares this conversation.</p>
+      </div>`;
+      return;
+    }
+    let html = messages.map(m => {
+      const agent = m.role === 'assistant';
+      const d = new Date(m.timestamp || Date.now());
+      return `<div class="m ${agent ? 'agent' : 'user'}">
+        <div class="who">${agent ? 'Agent' : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
+        <div class="txt">${agent ? renderMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
+      </div>`;
+    }).join('');
+    if (pending) html += `<div class="m agent"><div class="who">Agent</div><div class="typing"><i></i><i></i><i></i></div></div>`;
+    body.innerHTML = html;
+    body.scrollTop = body.scrollHeight;
+  }
+
+  // Preview mode keeps messages on this device only, so the layout can be tried without a backend.
+  function localPush(msg) { messages.push({ key: 'local-' + Date.now() + Math.random(), ...msg }); renderChat(); }
+
+  async function send() {
+    if (pending) return;
+    const inputEl = document.getElementById('input'), nameEl = document.getElementById('name');
+    const text = inputEl.value.trim();
+    if (!text) return;
+    const name = nameEl.value.trim();
+    if (!name) { nameEl.focus(); nameEl.placeholder = 'Add your name first'; return; }
+    store.set('wv_agent_name', name);
+
+    const history = messages.slice(-HISTORY_LEN).map(m => ({
+      role: m.role === 'assistant' ? 'assistant' : 'user',
+      content: m.role === 'assistant' ? m.content : `[${m.name || 'Anon'}]: ${m.content}`,
+    }));
+
+    inputEl.value = ''; inputEl.style.height = 'auto';
+    pending = true; document.getElementById('send-btn').disabled = true;
+    document.getElementById('agent').classList.add('speaking');
+    const userMsg = { role: 'user', name, content: text.slice(0, 4000), timestamp: Date.now() };
+
+    try {
+      if (connected) await db.ref(CHAT_NODE).push(userMsg); else localPush(userMsg);
+      renderChat();
+
+      let reply;
+      if (AGENT_URL.includes('YOUR-SUBDOMAIN')) {
+        reply = "I'm not hooked up yet. Once the Worker URL is set in this page, I'll answer here with live market context.";
+      } else {
+        await fetchHeadlines();
+        const res = await fetch(AGENT_URL, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: text, name, history, snapshot: buildSnapshot() }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.text) reply = data.text;
+        else if (res.status === 429) reply = "I'm being rate-limited. Ask again in a minute.";
+        else reply = `I couldn't get an answer${data.error ? ` (${data.error})` : ''}. Try again in a moment.`;
+      }
+      const agentMsg = { role: 'assistant', content: reply, timestamp: Date.now() };
+      if (connected) await db.ref(CHAT_NODE).push(agentMsg); else localPush(agentMsg);
+    } catch (e) {
+      console.error(e);
+      const errMsg = { role: 'assistant', content: "I couldn't reach the server. Check your connection and try again.", timestamp: Date.now() };
+      if (connected) await db.ref(CHAT_NODE).push(errMsg).catch(() => {}); else localPush(errMsg);
+    } finally {
+      pending = false; document.getElementById('send-btn').disabled = false;
+      document.getElementById('agent').classList.remove('speaking');
+      renderChat(); inputEl.focus();
+    }
+  }
+
+  // In-page confirm (no browser dialogs)
+  function askClear() { document.getElementById('confirm').hidden = false; }
+  function cancelClear() { document.getElementById('confirm').hidden = true; }
+  function clearChat() {
+    document.getElementById('confirm').hidden = true;
+    if (connected) db.ref(CHAT_NODE).remove(); else { messages = []; renderChat(); }
+  }
+
+  // ================= INPUT =================
+  const inputEl = document.getElementById('input');
+  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
+  inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(220, Math.max(92, inputEl.scrollHeight)) + 'px'; });
+  document.getElementById('name').value = store.get('wv_agent_name') || '';
+
+  // ================= BOOT =================
+  renderChat();
+  connect();
+</script>
+</body>
+</html>
