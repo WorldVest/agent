@@ -15,8 +15,8 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
 
 <style>
-  /* Layout: a night trading floor. Wordmark left, the agent standing large on the right,
-     a live ticker tape along the floor line; scroll down for the story; chat slides in from the right. */
+  /* Layout: a night trading floor fixed behind the whole page. Title line on top; two equal halves below:
+     the agent always stands in one, the chat fades into the other when she's clicked. A switch flips the sides. */
   :root {
     color-scheme: dark;
     --ink: #0d1626;        /* night floor navy, page ground */
@@ -37,7 +37,7 @@
   * { box-sizing: border-box; }
   html { scroll-behavior: smooth; }
   body {
-    margin: 0; background: var(--ink); color: var(--paper);
+    margin: 0; background: var(--ink); color: var(--paper); position: relative; isolation: isolate;
     font-family: var(--body); font-size: 16px; line-height: 1.6;
     -webkit-font-smoothing: antialiased;
   }
@@ -48,10 +48,10 @@
     html { scroll-behavior: auto; }
   }
 
-  /* ============ HERO ============ */
-  .hero {
-    position: relative; isolation: isolate; overflow: hidden;
-    display: grid; grid-template-rows: auto 1fr auto;
+  /* The trading floor stays put behind the whole page, footer included.
+     (A fixed layer instead of background-attachment: fixed, which iPhones ignore.) */
+  .floor {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
       linear-gradient(180deg, rgba(13,22,38,0.7) 0%, rgba(13,22,38,0.2) 35%, rgba(13,22,38,0.35) 70%, rgba(13,22,38,0.95) 100%),
       radial-gradient(ellipse 80% 70% at 50% 50%, transparent 40%, rgba(13,22,38,0.55) 100%),
@@ -65,6 +65,14 @@
       repeating-linear-gradient(90deg, rgba(120,170,230,0.05) 0 80px, transparent 80px 96px),
       #0b1424;
   }
+  /* Darkens the photo as you scroll into the reading sections */
+  .floor-dim {
+    position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: rgba(9,15,27,0.82); opacity: 0; transition: opacity .3s linear;
+  }
+
+  /* ============ HERO ============ */
+  .hero { position: relative; display: grid; grid-template-rows: auto 1fr auto; }
 
   /* ---- Title line ---- */
   .titlebar {
@@ -81,16 +89,34 @@
     font-family: var(--body); font-weight: 300;
     font-size: clamp(17px, 1.9vw, 26px); color: var(--brass);
   }
-  .titlebar .links { margin-left: auto; display: flex; gap: 22px; font-size: 14px; }
+  .titlebar .links { margin-left: auto; display: flex; align-items: center; gap: 22px; font-size: 14px; }
   .titlebar .links a { color: var(--haze); text-decoration: none; }
   .titlebar .links a:hover { color: var(--paper); }
 
-  /* ---- Stage: she stands alone; clicking her opens the chat on the left ---- */
+  .flip {
+    display: inline-flex; align-items: center; gap: 10px; cursor: pointer;
+    background: transparent; border: none; color: var(--haze); font-size: 14px; padding: 4px 0;
+  }
+  .flip:hover { color: var(--paper); }
+  .flip .track {
+    position: relative; width: 44px; height: 24px; border-radius: 999px;
+    background: rgba(236,230,216,0.14); border: 1px solid var(--line); transition: background .2s;
+  }
+  .flip .knob {
+    position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: var(--paper); transition: transform .25s cubic-bezier(.2,.7,.2,1);
+  }
+  .flip[aria-checked="true"] .track { background: var(--brass-soft); border-color: rgba(201,164,92,0.5); }
+  .flip[aria-checked="true"] .knob { transform: translateX(20px); background: var(--brass); }
+
+  /* ---- Stage: two equal halves. Chat half is empty until she's clicked. ---- */
   .stage {
-    display: flex; align-items: flex-end;
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas: "chat agent"; gap: clamp(20px, 3vw, 48px); align-items: end;
     padding: clamp(20px, 3vw, 36px) clamp(16px, 4vw, 56px) 0;
   }
-  .agent-wrap { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; }
+  .stage.flipped { grid-template-areas: "agent chat"; }
+  .agent-wrap { grid-area: agent; min-width: 0; display: flex; justify-content: center; }
 
   /* ---- The agent ---- */
   .agent {
@@ -123,7 +149,7 @@
   .agent.no-photo img { display: none; }
 
   .bubble {
-    position: absolute; top: 12%; left: -4%;
+    position: absolute; top: 12%; left: -6%;
     background: var(--paper); color: var(--ink);
     font-size: 15px; font-weight: 500; line-height: 1.35;
     padding: 12px 16px; border-radius: 18px 18px 18px 4px; max-width: 220px; text-align: left;
@@ -131,27 +157,27 @@
     animation: bubbleIn .6s 1s both cubic-bezier(.2,.7,.2,1);
     transition: opacity .25s;
   }
+  .stage.flipped .bubble { left: auto; right: -6%; border-radius: 18px 18px 4px 18px; }
   .stage.chatting .bubble { opacity: 0; pointer-events: none; }
   @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
 
   /* ---- Chat panel ---- */
   .chat {
-    height: min(74vh, 680px); min-height: 440px; min-width: 0;
+    grid-area: chat; height: min(74vh, 680px); min-height: 440px; min-width: 0;
     display: flex; flex-direction: column; margin-bottom: 20px;
-    flex: 0 0 0px; margin-right: 0; opacity: 0; visibility: hidden;
-    transition: flex-basis .55s cubic-bezier(.2,.7,.2,1), margin-right .55s cubic-bezier(.2,.7,.2,1), opacity .35s .15s, visibility 0s .55s;
+    opacity: 0; visibility: hidden; transform: translateY(14px) scale(.985);
+    transition: opacity .3s, transform .4s cubic-bezier(.2,.7,.2,1), visibility 0s .4s;
     background: rgba(21,35,58,0.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--line); border-radius: 22px; overflow: hidden;
     box-shadow: 0 30px 80px rgba(0,0,0,0.35);
   }
   .stage.chatting .chat {
-    flex-basis: min(580px, 52%); margin-right: clamp(20px, 3vw, 48px);
-    opacity: 1; visibility: visible;
-    transition: flex-basis .55s cubic-bezier(.2,.7,.2,1), margin-right .55s cubic-bezier(.2,.7,.2,1), opacity .35s .15s, visibility 0s;
+    opacity: 1; visibility: visible; transform: none;
+    transition: opacity .3s, transform .4s cubic-bezier(.2,.7,.2,1), visibility 0s;
   }
   .c-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
   .c-title { flex: 1; min-width: 0; }
-  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 19px; line-height: 1.2; }
+  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 21px; line-height: 1.2; }
   .c-title span { font-size: 13px; color: var(--haze); }
   .c-title .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--haze); margin-right: 6px; }
   .c-title .dot.live { background: var(--up); }
@@ -170,13 +196,13 @@
   .confirm button { border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--paper); }
   .confirm .danger { background: var(--down); border-color: var(--down); color: #2a0a05; font-weight: 600; }
 
-  .c-body { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; overscroll-behavior: contain; }
-  .m { max-width: 92%; min-width: 0; }
-  .m .who { font-size: 12px; color: var(--haze); margin-bottom: 4px; }
-  .m .txt { font-size: 15px; line-height: 1.6; word-break: break-word; }
+  .c-body { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; overscroll-behavior: contain; }
+  .m { max-width: 88%; min-width: 0; }
+  .m .who { font-size: 13px; color: var(--haze); margin-bottom: 5px; }
+  .m .txt { font-size: 17px; line-height: 1.6; word-break: break-word; }
   .m.user { align-self: flex-end; }
   .m.user .who { text-align: right; }
-  .m.user .txt { background: var(--ink-3); padding: 10px 14px; border-radius: 16px 16px 4px 16px; }
+  .m.user .txt { background: var(--ink-3); padding: 11px 16px; border-radius: 16px 16px 4px 16px; }
   .m.agent .txt p { margin: 0 0 10px; }
   .m.agent .txt p:last-child { margin: 0; }
   .m.agent .txt ul { margin: 4px 0 10px; padding-left: 20px; }
@@ -190,10 +216,10 @@
   .typing i:nth-child(3) { animation-delay: .3s; }
   @keyframes blip { 0%, 60%, 100% { opacity: .3; } 30% { opacity: 1; } }
 
-  .c-empty { color: var(--haze); font-size: 15px; }
+  .c-empty { color: var(--haze); font-size: 17px; max-width: 52ch; }
   .c-empty p { margin: 0 0 14px; }
 
-  .c-foot { border-top: 1px solid var(--line); padding: 12px 16px; display: grid; gap: 8px; }
+  .c-foot { border-top: 1px solid var(--line); padding: 14px 22px; display: grid; gap: 10px; }
   .c-foot input, .c-foot textarea {
     width: 100%; background: var(--ink); color: var(--paper);
     border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 16px; outline: none;
@@ -201,7 +227,7 @@
   .c-foot input:focus, .c-foot textarea:focus { border-color: var(--brass); }
   .c-foot input { font-size: 15px; padding: 8px 14px; }
   .c-row { display: flex; gap: 10px; align-items: flex-end; }
-  .c-row textarea { flex: 1; min-width: 0; resize: none; min-height: 92px; max-height: 220px; line-height: 1.5; padding: 12px 16px; font-size: 16px; }
+  .c-row textarea { flex: 1; min-width: 0; resize: none; min-height: 96px; max-height: 220px; line-height: 1.5; padding: 12px 16px; font-size: 17px; }
   .btn-primary {
     background: var(--brass); color: #1a1406; border: none; cursor: pointer;
     font-size: 15px; font-weight: 600; padding: 12px 20px; border-radius: 999px; flex-shrink: 0;
@@ -234,6 +260,7 @@
   }
 
   /* ============ ABOUT ============ */
+  main, footer { position: relative; }
   .about {
     padding: clamp(64px, 10vw, 128px) clamp(16px, 4vw, 56px);
     display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
@@ -244,14 +271,14 @@
     font-size: clamp(36px, 5vw, 60px); line-height: 1.05; letter-spacing: -0.02em;
     margin: 0 0 28px; text-wrap: balance;
   }
-  .about p { color: var(--haze); max-width: 60ch; margin: 0 0 18px; font-size: 17px; }
+  .about p { color: #b4bdcc; max-width: 60ch; margin: 0 0 18px; font-size: 17px; }
   .about p strong { color: var(--paper); font-weight: 500; }
 
   .sources { border-top: 1px solid var(--line); }
   .sources h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 24px 0 8px; }
   .sources dl { margin: 0; }
   .sources dt { color: var(--paper); font-weight: 500; margin-top: 18px; }
-  .sources dd { color: var(--haze); margin: 4px 0 0; font-size: 15px; }
+  .sources dd { color: #b4bdcc; margin: 4px 0 0; font-size: 15px; }
 
   .asks {
     grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 40px;
@@ -270,38 +297,45 @@
     padding: 28px clamp(16px, 4vw, 56px) calc(28px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid var(--line); color: var(--haze); font-size: 14px;
     display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    background: rgba(8,14,26,0.6);
   }
   footer a { color: var(--haze); }
 
   /* ============ MOBILE ============ */
   @media (max-width: 860px) {
     .titlebar .links { display: none; }
-    .stage { flex-direction: column; align-items: stretch; padding-top: 16px; }
-    .agent-wrap { order: 1; flex: none; }
+    .stage, .stage.flipped { grid-template-columns: 1fr; grid-template-areas: "agent" "chat"; gap: 0; padding-top: 16px; }
     .agent { height: min(64vh, 560px); transition: height .45s cubic-bezier(.2,.7,.2,1); }
     .stage.chatting .agent { height: min(30vh, 260px); }
-    .chat { order: 2; display: none; flex: none; height: 66vh; height: 66dvh; min-height: 420px; }
-    .stage.chatting .chat { display: flex; flex-basis: auto; margin-right: 0; }
-    .bubble { left: auto; right: -2%; top: 6%; font-size: 13px; max-width: 160px; padding: 10px 12px; }
+    .chat { display: none; height: 66vh; height: 66dvh; min-height: 420px; }
+    .stage.chatting .chat { display: flex; }
+    .bubble, .stage.flipped .bubble { left: auto; right: -2%; top: 6%; font-size: 13px; max-width: 160px; padding: 10px 12px; border-radius: 18px 18px 4px 18px; }
+    .m .txt { font-size: 16px; }
     .about { grid-template-columns: 1fr; }
     .asks { grid-template-columns: 1fr; gap: 16px; }
   }
 </style>
 </head>
 <body>
+<div class="floor" aria-hidden="true"></div>
+<div class="floor-dim" id="floor-dim" aria-hidden="true"></div>
 
 <!-- ============ HERO ============ -->
 <header class="hero" id="top">
   <div class="titlebar">
     <h1><span class="wordmark">WorldVest</span><span class="subtitle">Agentic Intelligence</span></h1>
     <nav class="links">
+      <button class="flip" id="flip" type="button" role="switch" aria-checked="false" onclick="toggleSides()">
+        <span class="track"><span class="knob"></span></span>
+        <span id="flip-label">Chat on left</span>
+      </button>
       <a href="#about">About</a>
       <a href="https://worldvest.xyz" target="_blank" rel="noopener">Watchlist</a>
     </nav>
   </div>
 
   <div class="stage">
-    <!-- Chat: hidden until she is clicked -->
+    <!-- Chat: its half stays empty until she is clicked -->
     <section class="chat" id="chat" aria-label="Chat with the agent" aria-hidden="true">
       <div class="c-head">
         <div class="c-title">
@@ -334,7 +368,7 @@
       </div>
     </section>
 
-    <!-- The agent on the right -->
+    <!-- The agent: always in her half -->
     <div class="agent-wrap">
     <button class="agent" id="agent" type="button" onclick="openChat()" aria-label="Talk to the WorldVest agent">
       <img src="agent.png" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
@@ -541,6 +575,29 @@
     const nameEl = document.getElementById('name');
     setTimeout(() => (nameEl.value ? document.getElementById('input') : nameEl).focus({ preventScroll: true }), already ? 0 : 450);
   }
+  // Flip which side the chat and agent are on. Remembered on this device.
+  function applySides(flipped) {
+    document.querySelector('.stage').classList.toggle('flipped', flipped);
+    document.getElementById('flip').setAttribute('aria-checked', String(flipped));
+    document.getElementById('flip-label').textContent = flipped ? 'Chat on right' : 'Chat on left';
+  }
+  function toggleSides() {
+    const flipped = !document.querySelector('.stage').classList.contains('flipped');
+    applySides(flipped);
+    store.set('wv_agent_flipped', flipped ? '1' : '0');
+  }
+  applySides(store.get('wv_agent_flipped') === '1');
+
+  // Dim the photo as you scroll past the hero so the About text stays readable
+  const dimEl = document.getElementById('floor-dim');
+  function updateDim() {
+    const h = document.getElementById('top').offsetHeight || 1;
+    dimEl.style.opacity = Math.min(1, Math.max(0, (window.scrollY - h * 0.35) / (h * 0.5))).toFixed(3);
+  }
+  window.addEventListener('scroll', updateDim, { passive: true });
+  window.addEventListener('resize', updateDim);
+  updateDim();
+
   function closeChat() {
     document.querySelector('.stage').classList.remove('chatting');
     document.getElementById('chat').setAttribute('aria-hidden', 'true');
@@ -656,7 +713,7 @@
   // ================= INPUT =================
   const inputEl = document.getElementById('input');
   inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
-  inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(220, Math.max(92, inputEl.scrollHeight)) + 'px'; });
+  inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(220, Math.max(96, inputEl.scrollHeight)) + 'px'; });
   document.getElementById('name').value = store.get('wv_agent_name') || '';
 
   // ================= BOOT =================
