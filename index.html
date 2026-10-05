@@ -189,9 +189,15 @@
   .icon-btn svg { width: 16px; height: 16px; }
 
 
-  .c-body { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; overscroll-behavior: contain; }
+  .c-body { position: relative; flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; overscroll-behavior: contain; }
   .m { max-width: 88%; min-width: 0; }
-  .m .who { font-size: 13px; color: var(--haze); margin-bottom: 5px; }
+  .m .who {
+    font-size: 13px; color: var(--haze); margin-bottom: 5px;
+    /* Stays pinned at the top while you scroll through a long message */
+    position: sticky; top: -20px; z-index: 1;
+    padding: 8px 0 6px; margin-top: -8px;
+    background: rgb(21,35,58); box-shadow: 0 6px 8px -4px rgb(21,35,58);
+  }
   .m .txt { font-size: 17px; line-height: 1.6; word-break: break-word; }
   .size-switch { margin-right: 4px; }
   /* Large text mode */
@@ -264,11 +270,6 @@
   .q .px { color: var(--haze); }
   .q .up { color: var(--up); }
   .q .down { color: var(--down); }
-  .tape-note {
-    position: absolute; right: 0; top: 0; bottom: 0; display: flex; align-items: center;
-    padding: 0 16px 0 40px; font-size: 12px; color: var(--haze);
-    background: linear-gradient(90deg, transparent, rgba(8,14,26,0.95) 30%);
-  }
 
   /* ============ ABOUT ============ */
   main, footer { position: relative; }
@@ -400,7 +401,6 @@
 
   <div class="tape" aria-label="Group watchlist prices">
     <div class="tape-track" id="tape-track"></div>
-    <div class="tape-note" id="tape-note">Sample prices</div>
   </div>
 </header>
 
@@ -496,7 +496,6 @@
       <span class="q"><b>${esc(sym)}</b><span class="px">${fmtPrice(px)}</span>
       <span class="${pct >= 0 ? 'up' : 'down'}">${fmtPct(pct)}</span></span>`).join('');
     document.getElementById('tape-track').innerHTML = one + one; // doubled for a seamless loop
-    document.getElementById('tape-note').hidden = !isSample;
   }
   renderTape(SAMPLE, true);
 
@@ -630,7 +629,7 @@
     const on = !document.getElementById('chat').classList.contains('big');
     applyBigText(on);
     store.set('wv_agent_bigtext', on ? '1' : '0');
-    const body = document.getElementById('c-body'); body.scrollTop = body.scrollHeight;
+    scrollToLatest();
   }
   applyBigText(store.get('wv_agent_bigtext') === '1');
 
@@ -672,16 +671,34 @@
       </div>`;
       return;
     }
+    const prevTop = body.scrollTop;
     let html = messages.map(m => {
       const agent = m.role === 'assistant';
       const d = new Date(m.timestamp || Date.now());
-      return `<div class="m ${agent ? 'from-agent' : 'from-user'}">
+      return `<div class="m ${agent ? 'from-agent' : 'from-user'}" data-key="${esc(m.key)}">
         <div class="who">${agent ? 'Maya' : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
         <div class="txt">${agent ? renderMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
       </div>`;
     }).join('');
     if (pending) html += `<div class="m from-agent"><div class="who">Maya</div><div class="typing"><i></i><i></i><i></i></div></div>`;
     body.innerHTML = html;
+
+    // Only move the scroll when a new message arrives; otherwise keep your place.
+    const last = messages[messages.length - 1];
+    const lastKey = last ? last.key : null;
+    if (lastKey !== lastSeenKey) { lastSeenKey = lastKey; scrollToLatest(); }
+    else body.scrollTop = prevTop;
+  }
+
+  // New reply from Maya: show its first line at the top. Anything else: go to the bottom.
+  let lastSeenKey = null;
+  function scrollToLatest() {
+    const body = document.getElementById('c-body');
+    const last = messages[messages.length - 1];
+    if (last && last.role === 'assistant') {
+      const el = [...body.querySelectorAll('.m[data-key]')].pop();
+      if (el) { body.scrollTop = Math.max(0, el.offsetTop - 12); return; }
+    }
     body.scrollTop = body.scrollHeight;
   }
 
