@@ -116,6 +116,12 @@
     padding: 16px clamp(16px, 4vw, 56px) 0;
   }
   .stage.flipped { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); grid-template-areas: "agent chat"; }
+  /* Maya hidden: the chat stands alone, centered, and stays open */
+  .stage.no-maya, .stage.no-maya.flipped { grid-template-columns: minmax(0, 1100px); grid-template-areas: "chat"; justify-content: center; }
+  .stage.no-maya .agent-wrap { display: none; }
+  .stage.no-maya .chat-close { display: none; }
+  body.no-maya #flip { display: none; }
+  .stage.no-maya .m { max-width: min(88%, 780px); }  /* keep lines readable on the wide chat */
   .agent-wrap { grid-area: agent; min-width: 0; display: flex; justify-content: center; }
 
   /* ---- The agent ---- */
@@ -149,7 +155,7 @@
   .agent.no-photo img { display: none; }
 
   .bubble {
-    position: absolute; top: 6%; left: -34%;
+    position: absolute; top: 7%; left: -20%;
     background: var(--paper); color: var(--ink);
     font-size: 15px; font-weight: 500; line-height: 1.35;
     padding: 12px 16px; border-radius: 18px 18px 4px 18px; max-width: none; white-space: nowrap; text-align: left;
@@ -157,7 +163,7 @@
     animation: bubbleIn .6s 1s both cubic-bezier(.2,.7,.2,1);
     transition: opacity .25s;
   }
-  .stage.flipped .bubble { left: auto; right: -34%; border-radius: 18px 18px 18px 4px; }
+  .stage.flipped .bubble { left: auto; right: -20%; border-radius: 18px 18px 18px 4px; }
   .stage.chatting .bubble { animation: none; opacity: 0; visibility: hidden; pointer-events: none; }
   @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
 
@@ -311,6 +317,7 @@
   @media (max-width: 860px) {
     .titlebar .links { display: none; }
     .stage, .stage.flipped { grid-template-columns: 1fr; grid-template-areas: "agent" "chat"; gap: 0; padding-top: 16px; }
+    .stage.no-maya, .stage.no-maya.flipped { grid-template-columns: 1fr; grid-template-areas: "chat"; }
     .agent { height: min(64vh, 560px); transition: height .45s cubic-bezier(.2,.7,.2,1); }
     .stage.chatting .agent { height: min(30vh, 260px); }
     .chat { display: none; height: 70vh; height: 70dvh; min-height: 420px; }
@@ -338,6 +345,10 @@
         <span class="track"><span class="knob"></span></span>
         <span id="flip-label">Chat on left</span>
       </button>
+      <button class="flip" id="maya-switch" type="button" role="switch" aria-checked="true" onclick="toggleMaya()">
+        <span class="track"><span class="knob"></span></span>
+        <span>Show Maya</span>
+      </button>
       <a href="#about">About</a>
     </nav>
   </div>
@@ -354,7 +365,7 @@
           <span class="track"><span class="knob"></span></span>
           <span>Large text</span>
         </button>
-        <button class="icon-btn" type="button" onclick="closeChat()" title="Close chat" aria-label="Close chat">
+        <button class="icon-btn chat-close" type="button" onclick="closeChat()" title="Close chat" aria-label="Close chat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
@@ -604,6 +615,24 @@
   }
   applySides(store.get('wv_agent_flipped') === '1');
 
+  // Show or hide Maya's photo. With her hidden, the chat stays open on its own.
+  function applyMaya(show) {
+    const stage = document.querySelector('.stage');
+    stage.classList.toggle('no-maya', !show);
+    document.body.classList.toggle('no-maya', !show);
+    document.getElementById('maya-switch').setAttribute('aria-checked', String(show));
+    if (!show) {
+      stage.classList.add('chatting');
+      document.getElementById('chat').setAttribute('aria-hidden', 'false');
+      renderChat();
+    }
+  }
+  function toggleMaya() {
+    const show = document.querySelector('.stage').classList.contains('no-maya');
+    applyMaya(show);
+    store.set('wv_agent_hide_maya', show ? '0' : '1');
+  }
+
   // Dim the photo as you scroll past the hero so the About text stays readable
   const dimEl = document.getElementById('floor-dim');
   function updateDim() {
@@ -628,6 +657,7 @@
   applyBigText(store.get('wv_agent_bigtext') === '1');
 
   function closeChat() {
+    if (document.querySelector('.stage').classList.contains('no-maya')) return; // chat stays open when she's hidden
     document.querySelector('.stage').classList.remove('chatting');
     document.getElementById('chat').setAttribute('aria-hidden', 'true');
     document.getElementById('agent').focus({ preventScroll: true });
@@ -805,6 +835,7 @@
 
   // ================= BOOT =================
   renderChat();
+  applyMaya(store.get('wv_agent_hide_maya') !== '1');
   connect();
 </script>
 </body>
