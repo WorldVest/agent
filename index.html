@@ -111,11 +111,11 @@
 
   /* ---- Stage: two equal halves. Chat half is empty until she's clicked. ---- */
   .stage {
-    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas: "chat agent"; gap: clamp(20px, 3vw, 48px); align-items: end;
-    padding: clamp(20px, 3vw, 36px) clamp(16px, 4vw, 56px) 0;
+    display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    grid-template-areas: "chat agent"; gap: clamp(16px, 2vw, 32px); align-items: end;
+    padding: 16px clamp(16px, 4vw, 56px) 0;
   }
-  .stage.flipped { grid-template-areas: "agent chat"; }
+  .stage.flipped { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); grid-template-areas: "agent chat"; }
   .agent-wrap { grid-area: agent; min-width: 0; display: flex; justify-content: center; }
 
   /* ---- The agent ---- */
@@ -163,8 +163,8 @@
 
   /* ---- Chat panel ---- */
   .chat {
-    grid-area: chat; height: min(74vh, 680px); min-height: 440px; min-width: 0;
-    display: flex; flex-direction: column; margin-bottom: 20px;
+    grid-area: chat; height: clamp(480px, calc(100vh - 230px), 980px); height: clamp(480px, calc(100dvh - 230px), 980px); min-width: 0;
+    display: flex; flex-direction: column; margin-bottom: 16px;
     opacity: 0; visibility: hidden; transform: translateY(14px) scale(.985);
     transition: opacity .3s, transform .4s cubic-bezier(.2,.7,.2,1), visibility 0s .4s;
     background: rgba(21,35,58,0.86); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -177,7 +177,7 @@
   }
   .c-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
   .c-title { flex: 1; min-width: 0; }
-  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 21px; line-height: 1.2; }
+  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.15; }
   .c-title span { font-size: 13px; color: var(--haze); }
   .c-title .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--haze); margin-right: 6px; }
   .c-title .dot.live { background: var(--up); }
@@ -218,7 +218,7 @@
     border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; font-size: 16px; outline: none;
   }
   .c-foot input:focus, .c-foot textarea:focus { border-color: var(--brass); }
-  .c-foot input { font-size: 15px; padding: 8px 14px; }
+  .c-foot input { width: 170px; font-size: 13px; padding: 5px 12px; border-radius: 999px; }
   .c-foot input.need { border-color: var(--down); box-shadow: 0 0 0 3px rgba(236,117,99,0.2); }
   .c-foot input.need::placeholder { color: var(--down); }
   .c-row { display: flex; gap: 10px; align-items: flex-end; }
@@ -308,7 +308,8 @@
     .stage, .stage.flipped { grid-template-columns: 1fr; grid-template-areas: "agent" "chat"; gap: 0; padding-top: 16px; }
     .agent { height: min(64vh, 560px); transition: height .45s cubic-bezier(.2,.7,.2,1); }
     .stage.chatting .agent { height: min(30vh, 260px); }
-    .chat { display: none; height: 66vh; height: 66dvh; min-height: 420px; }
+    .chat { display: none; height: 70vh; height: 70dvh; min-height: 420px; }
+    .c-title strong { font-size: 24px; }
     .stage.chatting .chat { display: flex; }
     .bubble, .stage.flipped .bubble { left: auto; right: -2%; top: 6%; font-size: 13px; max-width: 160px; padding: 10px 12px; border-radius: 18px 18px 4px 18px; }
     .m .txt { font-size: 16px; }
