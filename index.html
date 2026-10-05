@@ -226,6 +226,8 @@
   }
   .c-foot input:focus, .c-foot textarea:focus { border-color: var(--brass); }
   .c-foot input { font-size: 15px; padding: 8px 14px; }
+  .c-foot input.need { border-color: var(--down); box-shadow: 0 0 0 3px rgba(236,117,99,0.2); }
+  .c-foot input.need::placeholder { color: var(--down); }
   .c-row { display: flex; gap: 10px; align-items: flex-end; }
   .c-row textarea { flex: 1; min-width: 0; resize: none; min-height: 96px; max-height: 220px; line-height: 1.5; padding: 12px 16px; font-size: 17px; }
   .btn-primary {
@@ -664,7 +666,13 @@
     const text = inputEl.value.trim();
     if (!text) return;
     const name = nameEl.value.trim();
-    if (!name) { nameEl.focus(); nameEl.placeholder = 'Add your name first'; return; }
+    if (!name) {
+      nameEl.classList.add('need');
+      nameEl.placeholder = 'Add your name first, then press Send';
+      nameEl.focus();
+      return;
+    }
+    nameEl.classList.remove('need');
     store.set('wv_agent_name', name);
 
     const history = messages.slice(-HISTORY_LEN).map(m => ({
@@ -730,6 +738,7 @@
   inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
   inputEl.addEventListener('input', () => { inputEl.style.height = 'auto'; inputEl.style.height = Math.min(220, Math.max(96, inputEl.scrollHeight)) + 'px'; });
   document.getElementById('name').value = store.get('wv_agent_name') || '';
+  document.getElementById('name').addEventListener('input', e => { if (e.target.value.trim()) e.target.classList.remove('need'); });
 
   // ================= BOOT =================
   renderChat();
