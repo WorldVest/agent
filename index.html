@@ -158,7 +158,7 @@
     transition: opacity .25s;
   }
   .stage.flipped .bubble { left: auto; right: -6%; border-radius: 18px 18px 4px 18px; }
-  .stage.chatting .bubble { opacity: 0; pointer-events: none; }
+  .stage.chatting .bubble { animation: none; opacity: 0; visibility: hidden; pointer-events: none; }
   @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
 
   /* ---- Chat panel ---- */
@@ -188,27 +188,20 @@
   .icon-btn:hover { color: var(--paper); border-color: var(--haze); }
   .icon-btn svg { width: 16px; height: 16px; }
 
-  .confirm {
-    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-    padding: 10px 16px; background: rgba(236,117,99,0.1); border-bottom: 1px solid var(--line); font-size: 14px;
-  }
-  .confirm span { flex: 1; min-width: 0; }
-  .confirm button { border-radius: 999px; padding: 6px 14px; font-size: 13px; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--paper); }
-  .confirm .danger { background: var(--down); border-color: var(--down); color: #2a0a05; font-weight: 600; }
 
   .c-body { flex: 1; overflow-y: auto; padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; overscroll-behavior: contain; }
   .m { max-width: 88%; min-width: 0; }
   .m .who { font-size: 13px; color: var(--haze); margin-bottom: 5px; }
   .m .txt { font-size: 17px; line-height: 1.6; word-break: break-word; }
-  .m.user { align-self: flex-end; }
-  .m.user .who { text-align: right; }
-  .m.user .txt { background: var(--ink-3); padding: 11px 16px; border-radius: 16px 16px 4px 16px; }
-  .m.agent .txt p { margin: 0 0 10px; }
-  .m.agent .txt p:last-child { margin: 0; }
-  .m.agent .txt ul { margin: 4px 0 10px; padding-left: 20px; }
-  .m.agent .txt strong { color: #fff; font-weight: 600; }
-  .m.agent .txt a { color: var(--brass); }
-  .m.agent .who { color: var(--brass); }
+  .m.from-user { align-self: flex-end; }
+  .m.from-user .who { text-align: right; }
+  .m.from-user .txt { background: var(--ink-3); padding: 11px 16px; border-radius: 16px 16px 4px 16px; }
+  .m.from-agent .txt p { margin: 0 0 10px; }
+  .m.from-agent .txt p:last-child { margin: 0; }
+  .m.from-agent .txt ul { margin: 4px 0 10px; padding-left: 20px; }
+  .m.from-agent .txt strong { color: #fff; font-weight: 600; }
+  .m.from-agent .txt a { color: var(--brass); }
+  .m.from-agent .who { color: var(--brass); }
 
   .typing { display: inline-flex; gap: 5px; padding: 6px 0; }
   .typing i { width: 7px; height: 7px; border-radius: 50%; background: var(--brass); animation: blip 1.3s infinite; }
@@ -237,7 +230,13 @@
   }
   .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 30px rgba(201,164,92,0.35); }
   .btn-primary:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
-  .c-note { font-size: 12px; color: var(--haze); }
+  .c-note { font-size: 12px; color: var(--haze); display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .link-btn { background: none; border: none; padding: 0; cursor: pointer; font-size: 12px; color: var(--haze); text-decoration: underline; text-underline-offset: 3px; }
+  .link-btn:hover { color: var(--paper); }
+  .link-btn.danger { color: var(--down); font-weight: 600; }
+  .clear-ask { display: none; gap: 10px; align-items: center; color: var(--paper); }
+  .clear-wrap.asking #clear-btn { display: none; }
+  .clear-wrap.asking .clear-ask { display: inline-flex; }
   .chat.flash { animation: flash .9s ease; }
   @keyframes flash { 30% { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-soft), 0 30px 80px rgba(0,0,0,0.35); } }
 
@@ -338,25 +337,17 @@
 
   <div class="stage">
     <!-- Chat: its half stays empty until she is clicked -->
-    <section class="chat" id="chat" aria-label="Chat with the agent" aria-hidden="true">
+    <section class="chat" id="chat" aria-label="Chat with Agent Maya" aria-hidden="true">
       <div class="c-head">
         <div class="c-title">
-          <strong>WorldVest Agent</strong>
+          <strong>Agent Maya</strong>
           <span><i class="dot" id="conn-dot"></i><span id="conn-text">Connecting…</span></span>
         </div>
-        <button class="icon-btn" type="button" onclick="askClear()" title="Clear the shared chat" aria-label="Clear the shared chat">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>
-        </button>
         <button class="icon-btn" type="button" onclick="closeChat()" title="Close chat" aria-label="Close chat">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
         </button>
       </div>
 
-      <div class="confirm" id="confirm" hidden>
-        <span>Clear the conversation for everyone?</span>
-        <button type="button" onclick="cancelClear()">Keep it</button>
-        <button type="button" class="danger" onclick="clearChat()">Clear chat</button>
-      </div>
 
       <div class="c-body" id="c-body"></div>
 
@@ -366,7 +357,16 @@
           <textarea id="input" rows="3" placeholder="Ask about a stock, the week ahead, a strategy…"></textarea>
           <button class="btn-primary" id="send-btn" type="button" onclick="send()">Send</button>
         </div>
-        <div class="c-note">Shared with the group · Not financial advice</div>
+        <div class="c-note">
+          <span>Shared with the group · Not financial advice</span>
+          <span class="clear-wrap">
+            <button class="link-btn" id="clear-btn" type="button" onclick="askClear()">Clear chat</button>
+            <span class="clear-ask" id="clear-ask">Clear for everyone?
+              <button class="link-btn danger" type="button" onclick="clearChat()">Yes, clear</button>
+              <button class="link-btn" type="button" onclick="cancelClear()">Cancel</button>
+            </span>
+          </span>
+        </div>
       </div>
     </section>
 
@@ -647,12 +647,12 @@
     let html = messages.map(m => {
       const agent = m.role === 'assistant';
       const d = new Date(m.timestamp || Date.now());
-      return `<div class="m ${agent ? 'agent' : 'user'}">
-        <div class="who">${agent ? 'Agent' : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
+      return `<div class="m ${agent ? 'from-agent' : 'from-user'}">
+        <div class="who">${agent ? 'Maya' : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
         <div class="txt">${agent ? renderMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
       </div>`;
     }).join('');
-    if (pending) html += `<div class="m agent"><div class="who">Agent</div><div class="typing"><i></i><i></i><i></i></div></div>`;
+    if (pending) html += `<div class="m from-agent"><div class="who">Maya</div><div class="typing"><i></i><i></i><i></i></div></div>`;
     body.innerHTML = html;
     body.scrollTop = body.scrollHeight;
   }
@@ -750,10 +750,10 @@
 
 
   // In-page confirm (no browser dialogs)
-  function askClear() { document.getElementById('confirm').hidden = false; }
-  function cancelClear() { document.getElementById('confirm').hidden = true; }
+  function askClear() { document.querySelector('.clear-wrap').classList.add('asking'); }
+  function cancelClear() { document.querySelector('.clear-wrap').classList.remove('asking'); }
   function clearChat() {
-    document.getElementById('confirm').hidden = true;
+    cancelClear();
     if (connected) db.ref(CHAT_NODE).remove(); else { messages = []; renderChat(); }
   }
 
