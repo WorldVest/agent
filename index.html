@@ -116,12 +116,8 @@
     padding: 16px clamp(16px, 4vw, 56px) 0;
   }
   .stage.flipped { grid-template-columns: minmax(0, 1fr) minmax(0, 1.55fr); grid-template-areas: "agent chat"; }
-  /* Maya hidden: the chat stands alone, centered, and stays open */
-  .stage.no-maya, .stage.no-maya.flipped { grid-template-columns: minmax(0, 1100px); grid-template-areas: "chat"; justify-content: center; }
-  .stage.no-maya .agent-wrap { display: none; }
-  .stage.no-maya .chat-close { display: none; }
-  body.no-maya #flip { display: none; }
-  .stage.no-maya .m { max-width: min(88%, 780px); }  /* keep lines readable on the wide chat */
+  /* Maya hidden: her half just shows the trading floor; the chat keeps its side and can still close */
+  .stage.no-maya .agent-wrap { visibility: hidden; pointer-events: none; }
   .agent-wrap { grid-area: agent; min-width: 0; display: flex; justify-content: center; }
 
   /* ---- The agent ---- */
@@ -615,17 +611,13 @@
   }
   applySides(store.get('wv_agent_flipped') === '1');
 
-  // Show or hide Maya's photo. With her hidden, the chat stays open on its own.
+  // Show or hide Maya's photo. The chat keeps its side and can still be closed;
+  // with her hidden and the chat closed, only the background shows.
   function applyMaya(show) {
     const stage = document.querySelector('.stage');
     stage.classList.toggle('no-maya', !show);
     document.body.classList.toggle('no-maya', !show);
     document.getElementById('maya-switch').setAttribute('aria-checked', String(show));
-    if (!show) {
-      stage.classList.add('chatting');
-      document.getElementById('chat').setAttribute('aria-hidden', 'false');
-      renderChat();
-    }
   }
   function toggleMaya() {
     const show = document.querySelector('.stage').classList.contains('no-maya');
@@ -657,7 +649,6 @@
   applyBigText(store.get('wv_agent_bigtext') === '1');
 
   function closeChat() {
-    if (document.querySelector('.stage').classList.contains('no-maya')) return; // chat stays open when she's hidden
     document.querySelector('.stage').classList.remove('chatting');
     document.getElementById('chat').setAttribute('aria-hidden', 'true');
     document.getElementById('agent').focus({ preventScroll: true });
