@@ -55,7 +55,7 @@
     background:
       linear-gradient(180deg, rgba(13,22,38,0.7) 0%, rgba(13,22,38,0.2) 35%, rgba(13,22,38,0.35) 70%, rgba(13,22,38,0.95) 100%),
       radial-gradient(ellipse 80% 70% at 50% 50%, transparent 40%, rgba(13,22,38,0.55) 100%),
-      url('trading-floor.jpg') center 35% / cover no-repeat,
+      url('trading-floor.jpg?v=2') center 35% / cover no-repeat,
       radial-gradient(ellipse 34% 20% at 50% 36%, rgba(47,224,138,0.24), transparent 70%),
       radial-gradient(ellipse 28% 40% at 8% 40%, rgba(46,110,200,0.28), transparent 70%),
       radial-gradient(ellipse 28% 40% at 92% 40%, rgba(46,110,200,0.24), transparent 70%),
@@ -371,7 +371,7 @@
     <!-- The agent: always in her half -->
     <div class="agent-wrap">
     <button class="agent" id="agent" type="button" onclick="openChat()" aria-label="Talk to the WorldVest agent">
-      <img src="agent.png" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
+      <img src="agent.png?v=2" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
       <div class="agent-placeholder" aria-hidden="true">
         <span>Your agent photo goes here<br><small>agent.png</small></span>
       </div>
@@ -425,6 +425,8 @@
 
 <script>
   // ================= CONFIG =================
+  // Replacing a photo? Upload it with the same name, then bump ?v=2 to ?v=3
+  // for trading-floor.jpg (in the CSS) and agent.png (the img tag) so browsers fetch the new one.
   const AGENT_URL = "https://maya.thill5523.workers.dev"; // your Cloudflare Worker
   const FINNHUB_KEY = "d7ok9vhr01qsb7bf9bdgd7ok9vhr01qsb7bf9be0";
   const firebaseConfig = {
@@ -515,6 +517,10 @@
             .map(([key, m]) => ({ key, ...m }))
             .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
           renderChat();
+        }, err => {
+          // Most often: "agentchat" is missing from the Firebase Database rules
+          console.warn('agentchat read failed', err);
+          setConn(false, 'Chat blocked by database rules');
         });
       }).catch(err => { console.warn(err); setConn(false, 'Could not sign in to the database'); renderChat(); });
     } catch (e) { console.warn(e); setConn(false, 'Preview · not connected'); renderChat(); }
@@ -672,7 +678,16 @@
     const userMsg = { role: 'user', name, content: text.slice(0, 4000), timestamp: Date.now() };
 
     try {
-      if (connected) await db.ref(CHAT_NODE).push(userMsg); else localPush(userMsg);
+      if (connected) {
+        try { await db.ref(CHAT_NODE).push(userMsg); }
+        catch (err) {
+          console.warn('agentchat write failed', err);
+          localPush(userMsg);
+          localPush({ role: 'assistant', timestamp: Date.now(),
+            content: "Your message couldn't be saved to the shared chat. The database rules need an \"agentchat\" entry. Add it in Firebase → Realtime Database → Rules, then Publish." });
+          return;
+        }
+      } else localPush(userMsg);
       renderChat();
 
       let reply;
