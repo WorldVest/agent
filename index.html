@@ -321,8 +321,16 @@
     .stage.chatting .chat { display: flex; }
     .bubble, .stage.flipped .bubble { left: auto; right: -4%; top: auto; bottom: 30%; font-size: 13px; padding: 10px 12px; border-radius: 18px 18px 4px 18px; }
     .m .txt { font-size: 16px; }
-    .chat.big .m .txt { font-size: 21px; }
-    .size-switch span:last-child { display: none; }
+    /* No Large text on phones: hide the switch and keep normal sizes */
+    .size-switch { display: none; }
+    .chat.big .m .who { font-size: 15px; }
+    .chat.big .m.from-user .who { font-size: 16px; }
+    .chat.big .m .txt { font-size: 16px; line-height: 1.6; }
+    .chat.big .c-empty { font-size: 17px; }
+    .chat.big .c-row textarea { font-size: 17px; }
+    .chat.big .c-foot input { font-size: 13px; width: 170px; }
+    .chat.big .c-note { font-size: 12px; }
+    .chat.big .link-btn { font-size: 13px; }
     .about { grid-template-columns: 1fr; }
     .asks { grid-template-columns: 1fr; gap: 16px; }
   }
