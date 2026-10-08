@@ -252,6 +252,85 @@
   .chat.flash { animation: flash .9s ease; }
   @keyframes flash { 30% { border-color: var(--brass); box-shadow: 0 0 0 3px var(--brass-soft), 0 30px 80px rgba(0,0,0,0.35); } }
 
+  /* ---- Chat | Calendar tabs ---- */
+  .tabs { display: inline-flex; padding: 3px; border: 1px solid var(--line); border-radius: 999px; background: rgba(8,14,26,0.5); flex-shrink: 0; }
+  .tab { background: none; border: none; color: var(--haze); cursor: pointer; font-size: 14px; font-weight: 500; padding: 7px 16px; border-radius: 999px; transition: background .15s, color .15s; }
+  .tab:hover { color: var(--paper); }
+  .tab[aria-selected="true"] { background: var(--brass); color: #1a1406; }
+  .cal { display: none; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 22px 22px; }
+  .chat.cal-mode .c-body, .chat.cal-mode .c-foot { display: none; }
+  .chat.cal-mode .cal { display: block; }
+
+  /* ---- Calendar ---- */
+  .cal-top { display: flex; align-items: center; gap: 10px; margin: -16px -22px 10px; padding: 12px 22px 8px; position: sticky; top: -16px; z-index: 2; background: rgba(21,35,58,0.97); }
+  .cal-top h3 { flex: 1; margin: 0; font-family: var(--display); font-weight: 500; font-size: 24px; }
+  .cal-top .icon-btn { width: 32px; height: 32px; }
+  .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--haze); margin-bottom: 12px; }
+  .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .sw { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--k); display: inline-block; }
+  .k-earnings { --k: var(--brass); }
+  .k-macro { --k: #7fa9ff; }
+  .k-crypto { --k: var(--up); }
+  .k-other { --k: var(--paper); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .cal-wd { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--haze); text-align: center; padding-bottom: 4px; }
+  .cd {
+    min-height: 74px; min-width: 0; text-align: left; vertical-align: top; cursor: pointer;
+    display: flex; flex-direction: column; gap: 3px; padding: 6px;
+    background: rgba(8,14,26,0.35); border: 1px solid transparent; border-radius: 10px; color: var(--paper);
+    font: inherit; transition: border-color .15s, background .15s;
+  }
+  .cd:hover { border-color: var(--line); background: rgba(8,14,26,0.6); }
+  .cd.out { opacity: .38; }
+  .cd .n { font-size: 13px; font-weight: 600; line-height: 1; padding: 3px 0 4px; }
+  .cd.today .n { color: var(--brass); }
+  .cd.today { border-color: rgba(201,164,92,0.45); }
+  .cd.sel { border-color: var(--brass); background: rgba(201,164,92,0.12); }
+  .chip {
+    display: block; font-size: 11px; line-height: 1.35; padding: 1px 6px; border-radius: 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    background: color-mix(in srgb, var(--k) 18%, transparent); border-left: 2px solid var(--k);
+  }
+  .more { font-size: 11px; color: var(--haze); padding-left: 2px; }
+  .dots { display: none; gap: 3px; flex-wrap: wrap; }
+  .cal-day { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 14px; }
+  .cal-day h4 { margin: 0 0 10px; font-size: 17px; font-weight: 600; }
+  .cal-list { list-style: none; margin: 0 0 12px; padding: 0; display: grid; gap: 8px; }
+  .ev { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(8,14,26,0.45); border-left: 3px solid var(--k); }
+  .ev > div { flex: 1; min-width: 0; }
+  .ev b { display: block; font-weight: 500; font-size: 15px; word-break: break-word; }
+  .ev small { display: block; color: var(--haze); font-size: 12px; margin-top: 2px; }
+  .ev-x { background: none; border: 1px solid transparent; color: var(--haze); cursor: pointer; font-size: 13px; padding: 2px 8px; border-radius: 999px; flex-shrink: 0; }
+  .ev-x:hover { color: var(--paper); border-color: var(--line); }
+  .ev-x.sure { color: var(--down); border-color: var(--down); font-weight: 600; }
+  .cal-empty { color: var(--haze); font-size: 14px; margin: 0 0 12px; }
+  .cal-add { display: flex; gap: 8px; flex-wrap: wrap; }
+  .cal-add input, .cal-add select {
+    background: var(--ink); color: var(--paper); border: 1px solid var(--line); border-radius: 999px;
+    padding: 9px 14px; font-size: 14px; outline: none; font-family: inherit;
+  }
+  .cal-add input { flex: 1; min-width: 160px; }
+  .cal-add input:focus, .cal-add select:focus { border-color: var(--brass); }
+  .cal-add .btn-primary { padding: 9px 18px; font-size: 14px; }
+  .cal-msg { font-size: 12px; color: var(--haze); margin-top: 10px; }
+  .cal-msg.err { color: var(--down); }
+  .chat.big .cd .n { font-size: 16px; }
+  .chat.big .chip { font-size: 13px; }
+  .chat.big .ev b { font-size: 19px; }
+  .chat.big .ev small, .chat.big .cal-empty { font-size: 15px; }
+  .chat.big .cal-day h4 { font-size: 21px; }
+  .chat.big .cal-add input, .chat.big .cal-add select { font-size: 17px; }
+
+  /* Calendar changes noted under Maya's reply */
+  .cal-note { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .cal-note button {
+    display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--paper);
+    background: rgba(8,14,26,0.5); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
+  }
+  .cal-note button:hover { border-color: var(--brass); }
+  .cal-note .bad { color: var(--haze); cursor: default; }
+  .cal-note .bad:hover { border-color: var(--line); }
+
   /* ---- Ticker tape on the floor line ---- */
   .tape {
     border-top: 1px solid var(--line); background: rgba(8,14,26,0.85);
@@ -331,6 +410,20 @@
     .chat.big .c-foot input { font-size: 13px; width: 170px; }
     .chat.big .c-note { font-size: 12px; }
     .chat.big .link-btn { font-size: 13px; }
+    /* Calendar on phones: dots instead of titles */
+    .c-head { gap: 8px; padding: 12px; }
+    .tab { padding: 6px 12px; font-size: 13px; }
+    .cal { padding: 12px 12px 18px; }
+    .cal-top { margin: -12px -12px 10px; padding: 10px 12px 8px; top: -12px; }
+    .cd { min-height: 52px; padding: 5px; align-items: center; }
+    .cd .chip, .cd .more { display: none; }
+    .cd .dots { display: flex; justify-content: center; }
+    .chat.big .cd .n { font-size: 13px; }
+    .chat.big .ev b { font-size: 15px; }
+    .chat.big .ev small, .chat.big .cal-empty { font-size: 12px; }
+    .chat.big .cal-day h4 { font-size: 17px; }
+    .chat.big .cal-add input, .chat.big .cal-add select { font-size: 16px; }
+    .cal-add input, .cal-add select { font-size: 16px; }
     .about { grid-template-columns: 1fr; }
     .asks { grid-template-columns: 1fr; gap: 16px; }
   }
@@ -365,6 +458,10 @@
           <strong>Agent Maya</strong>
           <span><i class="dot" id="conn-dot"></i><span id="conn-text">Connecting…</span></span>
         </div>
+        <div class="tabs" role="tablist" aria-label="Chat or calendar">
+          <button class="tab" id="tab-chat" type="button" role="tab" aria-selected="true" onclick="setView('chat')">Chat</button>
+          <button class="tab" id="tab-cal" type="button" role="tab" aria-selected="false" onclick="setView('cal')">Calendar</button>
+        </div>
         <button class="flip size-switch" id="size-switch" type="button" role="switch" aria-checked="false" onclick="toggleBigText()" title="Make the chat text bigger">
           <span class="track"><span class="knob"></span></span>
           <span>Large text</span>
@@ -376,6 +473,41 @@
 
 
       <div class="c-body" id="c-body"></div>
+
+      <div class="cal" id="cal" role="tabpanel" aria-label="Group calendar">
+        <div class="cal-top">
+          <h3 id="cal-month">Month</h3>
+          <button class="link-btn" type="button" onclick="calToday()">Today</button>
+          <button class="icon-btn" type="button" onclick="calShift(-1)" aria-label="Previous month">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button class="icon-btn" type="button" onclick="calShift(1)" aria-label="Next month">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+          </button>
+        </div>
+        <div class="cal-legend">
+          <span class="k-earnings"><i class="sw"></i>Earnings</span>
+          <span class="k-macro"><i class="sw"></i>Macro (Fed, CPI, jobs)</span>
+          <span class="k-crypto"><i class="sw"></i>Crypto</span>
+          <span class="k-other"><i class="sw"></i>Other</span>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-day" id="cal-day">
+          <h4 id="cal-day-title"></h4>
+          <div id="cal-day-list"></div>
+          <form class="cal-add" id="cal-add" autocomplete="off">
+            <input id="cal-title" maxlength="80" placeholder="Add an event to this day…" aria-label="Event title" />
+            <select id="cal-kind" aria-label="Event type">
+              <option value="other">Other</option>
+              <option value="macro">Macro</option>
+              <option value="crypto">Crypto</option>
+              <option value="earnings">Earnings</option>
+            </select>
+            <button class="btn-primary" type="submit">Add</button>
+          </form>
+          <div class="cal-msg" id="cal-msg">Anyone in the group can add or delete events. You can also ask Maya to.</div>
+        </div>
+      </div>
 
       <div class="c-foot">
         <div class="c-name-row">
@@ -466,6 +598,8 @@
   };
   const CHAT_NODE = "agentchat"; // separate from WorldVest's "chat" board
   const HISTORY_LEN = 12;
+  const CAL_NODE = "agentcalendar"; // shared group calendar
+  const CAL_KINDS = { earnings: 'Earnings', macro: 'Macro', crypto: 'Crypto', other: 'Other' };
 
   // Password gate is OFF while previewing. Turned on later.
   const REQUIRE_PASSWORD = false;
@@ -477,6 +611,7 @@
     "Explain a covered call with real numbers",
     "How big should a single position be?",
     "Bull and bear case for our biggest holding",
+    "Put this month's Fed, CPI and jobs dates on the calendar",
   ];
 
   // Shown in the tape only until real prices load
@@ -535,7 +670,7 @@
       db = firebase.database();
       firebase.auth().signInAnonymously().then(() => {
         setConn(true, 'Online · reads our watchlist');
-        db.ref('watchlist').on('value', s => { watchlist = s.val() || {}; updateTape(); });
+        db.ref('watchlist').on('value', s => { watchlist = s.val() || {}; updateTape(); ensureEarnings(); });
         db.ref('prices').on('value', s => { prices = s.val() || {}; updateTape(); });
         db.ref(CHAT_NODE).limitToLast(200).on('value', s => {
           messages = Object.entries(s.val() || {})
@@ -546,6 +681,16 @@
           // Most often: "agentchat" is missing from the Firebase Database rules
           console.warn('agentchat read failed', err);
           setConn(false, 'Chat blocked by database rules');
+        });
+        db.ref(CAL_NODE).on('value', s => {
+          calEvents = Object.entries(s.val() || {}).map(([id, e]) => ({ id, ...e }));
+          calError = '';
+          renderCal();
+        }, err => {
+          // Most often: "agentcalendar" is missing from the Firebase Database rules
+          console.warn('agentcalendar read failed', err);
+          calError = 'Calendar blocked by database rules. Add "agentcalendar" to the Firebase rules.';
+          renderCal();
         });
       }).catch(err => { console.warn(err); setConn(false, 'Could not sign in to the database'); renderChat(); });
     } catch (e) { console.warn(e); setConn(false, 'Preview · not connected'); renderChat(); }
@@ -590,6 +735,7 @@
     lines.push('', "TODAY'S HEADLINES:");
     if (!headlines.length) lines.push('  (unavailable)');
     headlines.forEach(h => lines.push(`  - ${h.headline} (${h.source}${h.hoursAgo != null ? `, ${h.hoursAgo}h ago` : ''})`));
+    lines.push('', calSnapshot());
     return lines.join('\n');
   }
 
@@ -699,8 +845,11 @@
       const agent = m.role === 'assistant';
       const d = new Date(m.timestamp || Date.now());
       return `<div class="m ${agent ? 'from-agent' : 'from-user'}" data-key="${esc(m.key)}">
-        <div class="who">${agent ? 'Maya' : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
+        <div class="who">${agent ? (m.daily ? 'Maya · Daily brief' : 'Maya') : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
         <div class="txt">${agent ? renderMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
+        ${agent && Array.isArray(m.cal) && m.cal.length ? `<div class="cal-note">${m.cal.map(c =>
+          c.ok ? `<button type="button" class="k-${esc(c.kind || 'other')}" data-date="${esc(c.date)}"><i class="sw"></i>${esc(c.text)}</button>`
+               : `<button type="button" class="bad" disabled>${esc(c.text)}</button>`).join('')}</div>` : ''}
       </div>`;
     }).join('');
     if (pending) html += `<div class="m from-agent"><div class="who">Maya</div><div class="typing"><i></i><i></i><i></i></div></div>`;
@@ -804,7 +953,11 @@
       }
 
       // 3) Save the answer to the shared chat
-      const agentMsg = { role: 'assistant', content: reply, timestamp: Date.now() };
+      // Maya's calendar changes ride at the end of her reply; apply them and hide the block
+      const { clean, ops } = extractCalendar(reply);
+      const calNotes = ops.length ? await applyCalendarOps(ops) : [];
+      const agentMsg = { role: 'assistant', content: clean || 'Calendar updated.', timestamp: Date.now() };
+      if (calNotes.length) agentMsg.cal = calNotes;
       if (connected) {
         try { await withTimeout(db.ref(CHAT_NODE).push(agentMsg), 8000, 'Saving the reply'); }
         catch (err) { console.warn('[agent] reply save failed', err); localPush(agentMsg); }
@@ -825,6 +978,251 @@
     if (connected) db.ref(CHAT_NODE).remove(); else { messages = []; renderChat(); }
   }
 
+  // ================= CALENDAR =================
+  // Group events live in Firebase "agentcalendar"; earnings for watchlist stocks come from Finnhub (read-only).
+  let calEvents = [], calError = '';
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  function parseYmd(str) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(str || '').trim());
+    if (!m) return null;
+    const d = new Date(+m[1], +m[2] - 1, +m[3]);
+    return d.getMonth() === +m[2] - 1 && d.getDate() === +m[3] ? d : null;
+  }
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+  const fmtShort = str => { const d = parseYmd(str); return d ? d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : str; };
+  const todayYmd = () => ymd(new Date());
+  let calMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+  let calSel = todayYmd();
+
+  // ---- Auto earnings (Finnhub) ----
+  const earnings = {};          // "SYM|date" -> event
+  const earnFetched = new Set(); // "YYYY-MM|SYM"
+  let earnQueue = Promise.resolve();
+  function ensureEarnings() {
+    const syms = Object.keys(watchlist).filter(s => !isCrypto(s));
+    if (!syms.length) return;
+    const now = new Date();
+    const months = [calMonth, new Date(now.getFullYear(), now.getMonth(), 1), new Date(now.getFullYear(), now.getMonth() + 1, 1)];
+    for (const m of months) {
+      const key = `${m.getFullYear()}-${pad(m.getMonth() + 1)}`;
+      const from = ymd(addDays(m, -7)), to = ymd(addDays(new Date(m.getFullYear(), m.getMonth() + 1, 0), 7));
+      for (const sym of syms) {
+        const fk = key + '|' + sym;
+        if (earnFetched.has(fk)) continue;
+        earnFetched.add(fk);
+        earnQueue = earnQueue.then(async () => {
+          try {
+            const res = await fetch(`https://finnhub.io/api/v1/calendar/earnings?from=${from}&to=${to}&symbol=${encodeURIComponent(sym)}&token=${FINNHUB_KEY}`);
+            if (res.status === 429) { earnFetched.delete(fk); return; }
+            const data = await res.json();
+            for (const e of (data && data.earningsCalendar) || []) {
+              if (!parseYmd(e.date)) continue;
+              const when = e.hour === 'bmo' ? ' · before open' : e.hour === 'amc' ? ' · after close' : '';
+              earnings[sym + '|' + e.date] = {
+                id: 'auto-' + sym + '-' + e.date, date: e.date, kind: 'earnings', auto: true,
+                title: `${displaySym(sym)} earnings${when}`,
+                detail: e.epsEstimate != null ? `EPS est ${Number(e.epsEstimate).toFixed(2)}` : '',
+              };
+            }
+            renderCal();
+          } catch (err) { console.warn('earnings failed', sym, err); }
+          await new Promise(r => setTimeout(r, 120)); // stay under Finnhub's rate limit
+        });
+      }
+    }
+  }
+
+  function allEvents() {
+    const group = calEvents.filter(e => parseYmd(e.date) && e.title)
+      .map(e => ({ ...e, kind: CAL_KINDS[e.kind] ? e.kind : 'other' }));
+    return group.concat(Object.values(earnings));
+  }
+  const KIND_ORDER = { macro: 0, earnings: 1, crypto: 2, other: 3 };
+  function eventsOn(date, list = allEvents()) {
+    return list.filter(e => e.date === date)
+      .sort((a, b) => (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || ((a.createdAt || 0) - (b.createdAt || 0)));
+  }
+
+  function renderCal() {
+    const grid = document.getElementById('cal-grid');
+    if (!grid) return;
+    document.getElementById('cal-month').textContent =
+      calMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    const list = allEvents(), today = todayYmd();
+    const first = calMonth, start = addDays(first, -first.getDay());
+    const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
+    const cells = Math.ceil((first.getDay() + days) / 7) * 7;
+    let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-wd">${d}</div>`).join('');
+    for (let i = 0; i < cells; i++) {
+      const d = addDays(start, i), key = ymd(d), evs = eventsOn(key, list);
+      const cls = ['cd', d.getMonth() !== first.getMonth() && 'out', key === today && 'today', key === calSel && 'sel'].filter(Boolean).join(' ');
+      const chips = evs.slice(0, 2).map(e => `<span class="chip k-${e.kind}">${esc(e.title)}</span>`).join('');
+      const more = evs.length > 2 ? `<span class="more">+${evs.length - 2} more</span>` : '';
+      const dots = evs.length ? `<span class="dots">${evs.slice(0, 4).map(e => `<i class="sw k-${e.kind}"></i>`).join('')}</span>` : '';
+      html += `<button type="button" class="${cls}" data-date="${key}" aria-label="${esc(d.toDateString())}, ${evs.length} event${evs.length === 1 ? '' : 's'}">
+        <span class="n">${d.getDate()}</span>${chips}${more}${dots}</button>`;
+    }
+    grid.innerHTML = html;
+
+    // Selected day
+    const sel = parseYmd(calSel) || new Date();
+    document.getElementById('cal-day-title').textContent =
+      sel.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' });
+    const evs = eventsOn(calSel, list);
+    document.getElementById('cal-day-list').innerHTML = evs.length
+      ? `<ul class="cal-list">${evs.map(e => `<li class="ev k-${e.kind}"><div>
+          <b>${esc(e.title)}</b>
+          <small>${CAL_KINDS[e.kind]} · ${e.auto ? 'Auto · Finnhub' : 'added by ' + esc(e.addedBy || 'Anon')}${e.detail ? ' · ' + esc(e.detail) : ''}</small>
+        </div>${e.auto ? '' : `<button type="button" class="ev-x" data-id="${esc(e.id)}" aria-label="Delete ${esc(e.title)}">✕</button>`}</li>`).join('')}</ul>`
+      : '<p class="cal-empty">Nothing on this day yet.</p>';
+    const msg = document.getElementById('cal-msg');
+    msg.classList.toggle('err', !!calError);
+    msg.textContent = calError || 'Anyone in the group can add or delete events. You can also ask Maya to.';
+  }
+
+  function setView(v) {
+    const cal = v === 'cal';
+    document.getElementById('chat').classList.toggle('cal-mode', cal);
+    document.getElementById('tab-chat').setAttribute('aria-selected', String(!cal));
+    document.getElementById('tab-cal').setAttribute('aria-selected', String(cal));
+    if (cal) { ensureEarnings(); renderCal(); }
+    else { renderChat(); scrollToLatest(); }
+  }
+  function calShift(n) {
+    calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + n, 1);
+    const t = new Date();
+    calSel = (calMonth.getFullYear() === t.getFullYear() && calMonth.getMonth() === t.getMonth()) ? todayYmd() : ymd(calMonth);
+    ensureEarnings(); renderCal();
+  }
+  function calToday() { const t = new Date(); calMonth = new Date(t.getFullYear(), t.getMonth(), 1); calSel = todayYmd(); ensureEarnings(); renderCal(); }
+  function showDayPanel() {
+    const cal = document.getElementById('cal'), day = document.getElementById('cal-day');
+    if (day.offsetTop + 120 > cal.scrollTop + cal.clientHeight) cal.scrollTo({ top: day.offsetTop - 70, behavior: 'smooth' });
+  }
+  function calOpenDate(date) {
+    const d = parseYmd(date); if (!d) return;
+    calMonth = new Date(d.getFullYear(), d.getMonth(), 1); calSel = date;
+    setView('cal'); showDayPanel();
+  }
+
+  document.getElementById('cal-grid').addEventListener('click', e => {
+    const b = e.target.closest('.cd'); if (!b) return;
+    const d = parseYmd(b.dataset.date);
+    calSel = b.dataset.date;
+    if (d.getMonth() !== calMonth.getMonth()) { calMonth = new Date(d.getFullYear(), d.getMonth(), 1); ensureEarnings(); }
+    renderCal(); showDayPanel();
+  });
+  // Delete takes two taps: ✕, then "Delete?"
+  document.getElementById('cal-day-list').addEventListener('click', e => {
+    const b = e.target.closest('.ev-x'); if (!b) return;
+    if (!b.classList.contains('sure')) {
+      b.classList.add('sure'); b.textContent = 'Delete?';
+      setTimeout(() => { if (b.isConnected) { b.classList.remove('sure'); b.textContent = '✕'; } }, 3500);
+      return;
+    }
+    calDelete(b.dataset.id);
+  });
+  document.getElementById('c-body').addEventListener('click', e => {
+    const b = e.target.closest('.cal-note button[data-date]');
+    if (b) calOpenDate(b.dataset.date);
+  });
+  document.getElementById('cal-add').addEventListener('submit', async e => {
+    e.preventDefault();
+    const t = document.getElementById('cal-title'), title = t.value.trim().slice(0, 80);
+    if (!title) { t.focus(); return; }
+    const name = document.getElementById('name').value.trim() || 'Anon';
+    try {
+      await calAdd({ date: calSel, title, kind: document.getElementById('cal-kind').value, addedBy: name });
+      t.value = '';
+    } catch (err) {
+      const msg = document.getElementById('cal-msg');
+      msg.classList.add('err'); msg.textContent = `Couldn't save (${err.message || err.code}). Check the "agentcalendar" database rule.`;
+    }
+  });
+
+  async function calAdd(ev) {
+    const rec = { date: ev.date, title: ev.title, kind: CAL_KINDS[ev.kind] ? ev.kind : 'other', addedBy: ev.addedBy, createdAt: Date.now() };
+    if (connected) await withTimeout(db.ref(CAL_NODE).push(rec), 8000, 'Saving the event');
+    else { calEvents.push({ id: 'local-' + Date.now() + Math.random(), ...rec }); renderCal(); }
+  }
+  async function calDelete(id) {
+    if (connected) {
+      try { await withTimeout(db.ref(CAL_NODE + '/' + id).remove(), 8000, 'Deleting the event'); }
+      catch (err) { const m = document.getElementById('cal-msg'); m.classList.add('err'); m.textContent = `Couldn't delete (${err.message || err.code}).`; }
+    } else { calEvents = calEvents.filter(e => e.id !== id); renderCal(); }
+  }
+
+  // What Maya sees: the next few weeks of the calendar
+  function calSnapshot() {
+    const t = new Date();
+    const lines = [`CALENDAR (shared group calendar; today is ${todayYmd()}, ${t.toLocaleDateString('en-US', { weekday: 'long' })}):`];
+    if (calError) { lines.push('  (calendar unavailable right now)'); return lines.join('\n'); }
+    const from = ymd(addDays(t, -7)), to = ymd(addDays(t, 45));
+    const evs = allEvents().filter(e => e.date >= from && e.date <= to)
+      .sort((a, b) => a.date.localeCompare(b.date) || (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]));
+    if (!evs.length) lines.push('  (nothing on the calendar from ' + from + ' to ' + to + ')');
+    evs.slice(0, 60).forEach(e => lines.push(`  ${e.date} [${e.kind}${e.auto ? ', auto' : ''}] ${e.title}${e.auto ? '' : ` (added by ${e.addedBy || 'Anon'})`}`));
+    return lines.join('\n');
+  }
+
+  // Maya ends a reply with a <calendar> block to add or remove events. Pull it out of the text.
+  function extractCalendar(reply) {
+    const ops = [];
+    const re = /(?:```[a-z]*\s*)?<calendar>([\s\S]*?)(?:<\/calendar>|$)(?:\s*```)?/gi;
+    const clean = String(reply || '').replace(re, (_, body) => {
+      for (let line of body.split('\n')) {
+        line = line.replace(/^\s*[-*•]\s*/, '').trim();
+        if (!line || line.startsWith('```')) continue;
+        const parts = line.split('|').map(x => x.trim());
+        const action = (parts[0] || '').toLowerCase();
+        if (action === 'add' && parts.length >= 3) {
+          const kind = (parts[3] || 'other').toLowerCase();
+          ops.push({ op: 'add', date: parts[1], title: parts[2].slice(0, 80), kind: CAL_KINDS[kind] ? kind : 'other' });
+        } else if ((action === 'remove' || action === 'delete') && parts.length >= 3) {
+          ops.push({ op: 'remove', date: parts[1], needle: parts[2] });
+        }
+      }
+      return '';
+    }).trim();
+    return { clean, ops: ops.slice(0, 12) };
+  }
+
+  const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  async function applyCalendarOps(ops) {
+    const notes = [], addedNow = [];
+    for (const o of ops) {
+      const d = parseYmd(o.date);
+      if (!d || Math.abs(d.getFullYear() - new Date().getFullYear()) > 2) {
+        notes.push({ ok: false, text: `Skipped a bad date (${o.date})` }); continue;
+      }
+      if (o.op === 'add') {
+        const n = norm(o.title);
+        const dup = eventsOn(o.date).concat(addedNow.filter(a => a.date === o.date))
+          .some(e => { const m = norm(e.title); return m === n || m.includes(n) || n.includes(m); });
+        if (dup || !n) continue;
+        try {
+          await calAdd({ date: o.date, title: o.title, kind: o.kind, addedBy: 'Maya' });
+          addedNow.push({ date: o.date, title: o.title });
+          notes.push({ ok: true, kind: o.kind, date: o.date, text: `Added ${fmtShort(o.date)} · ${o.title}` });
+        } catch (err) { notes.push({ ok: false, text: `Couldn't save ${o.title} to the calendar` }); }
+      } else {
+        const n = norm(o.needle);
+        const hits = calEvents.filter(e => e.date === o.date && n && (norm(e.title).includes(n) || n.includes(norm(e.title))));
+        if (!hits.length) {
+          const auto = Object.values(earnings).some(e => e.date === o.date && norm(e.title).includes(n));
+          notes.push({ ok: false, text: auto ? `Auto earnings can't be removed` : `Nothing matching "${o.needle}" on ${fmtShort(o.date)}` });
+          continue;
+        }
+        for (const h of hits) {
+          await calDelete(h.id);
+          notes.push({ ok: true, kind: CAL_KINDS[h.kind] ? h.kind : 'other', date: o.date, text: `Removed ${fmtShort(o.date)} · ${h.title}` });
+        }
+      }
+    }
+    return notes;
+  }
+
   // ================= INPUT =================
   const inputEl = document.getElementById('input');
   inputEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } });
@@ -834,6 +1232,7 @@
 
   // ================= BOOT =================
   renderChat();
+  renderCal();
   applyMaya(store.get('wv_agent_hide_maya') !== '1');
   connect();
 </script>
