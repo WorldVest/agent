@@ -179,7 +179,11 @@
   }
   .c-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
   .c-title { flex: 1; min-width: 0; }
-  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 28px; line-height: 1.15; }
+  .c-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .c-title strong { display: block; font-family: var(--display); font-weight: 500; font-size: 32px; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cal-arrows { display: none; gap: 6px; flex-shrink: 0; }
+  .cal-arrows .icon-btn { width: 32px; height: 32px; }
+  .chat.cal-mode .cal-arrows { display: inline-flex; }
   .c-title span { font-size: 13px; color: var(--haze); }
   .c-title .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--haze); margin-right: 6px; }
   .c-title .dot.live { background: var(--up); }
@@ -262,11 +266,13 @@
   .chat.cal-mode .cal { display: block; }
 
   /* ---- Calendar ---- */
-  .cal-top { display: flex; align-items: center; gap: 10px; margin: -16px -22px 10px; padding: 12px 22px 8px; position: sticky; top: -16px; z-index: 2; background: rgba(21,35,58,0.97); }
-  .cal-top h3 { flex: 1; margin: 0; font-family: var(--display); font-weight: 500; font-size: 24px; }
-  .cal-top .icon-btn { width: 32px; height: 32px; }
-  .cal-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--haze); margin-bottom: 12px; }
-  .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .cal-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; font-size: 12px; color: var(--haze); margin-bottom: 12px; }
+  .today-btn {
+    margin-left: auto; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--paper);
+    background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px;
+  }
+  .today-btn:hover { border-color: var(--brass); color: var(--brass); }
+  .cal-legend > span { display: inline-flex; align-items: center; gap: 6px; }
   .sw { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--k); display: inline-block; }
   .k-earnings { --k: var(--brass); }
   .k-macro { --k: #7fa9ff; }
@@ -275,7 +281,7 @@
   .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
   .cal-wd { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--haze); text-align: center; padding-bottom: 4px; }
   .cd {
-    min-height: 74px; min-width: 0; text-align: left; vertical-align: top; cursor: pointer;
+    min-height: 84px; min-width: 0; text-align: left; vertical-align: top; cursor: pointer;
     display: flex; flex-direction: column; gap: 3px; padding: 6px;
     background: rgba(8,14,26,0.35); border: 1px solid transparent; border-radius: 10px; color: var(--paper);
     font: inherit; transition: border-color .15s, background .15s;
@@ -329,6 +335,8 @@
   }
   .cal-note button:hover { border-color: var(--brass); }
   .cal-note .bad { color: var(--haze); cursor: default; }
+  .cal-note .watch { --k: var(--up); cursor: default; }
+  .cal-note .watch:hover { border-color: var(--line); }
   .cal-note .bad:hover { border-color: var(--line); }
 
   /* ---- Ticker tape on the floor line ---- */
@@ -396,7 +404,15 @@
     .agent { height: min(64vh, 560px); transition: height .45s cubic-bezier(.2,.7,.2,1); }
     .stage.chatting .agent { height: min(30vh, 260px); }
     .chat { display: none; height: 70vh; height: 70dvh; min-height: 420px; }
-    .c-title strong { font-size: 24px; }
+    .c-title strong { font-size: 27px; }
+    .chat.cal-mode .c-title strong { font-size: 21px; overflow: visible; }
+    .chat.cal-mode .tab { padding: 6px 10px; }
+    .legend-more { display: none; }
+    .cal-legend { gap: 6px 12px; }
+    .chat.cal-mode .c-title > span { display: none; }
+    .c-name { gap: 6px; }
+    .cal-arrows { gap: 4px; }
+    .cal-arrows .icon-btn { width: 28px; height: 28px; }
     .stage.chatting .chat { display: flex; }
     .bubble, .stage.flipped .bubble { left: auto; right: -4%; top: auto; bottom: 30%; font-size: 13px; padding: 10px 12px; border-radius: 18px 18px 4px 18px; }
     .m .txt { font-size: 16px; }
@@ -414,8 +430,7 @@
     .c-head { gap: 8px; padding: 12px; }
     .tab { padding: 6px 12px; font-size: 13px; }
     .cal { padding: 12px 12px 18px; }
-    .cal-top { margin: -12px -12px 10px; padding: 10px 12px 8px; top: -12px; }
-    .cd { min-height: 52px; padding: 5px; align-items: center; }
+    .cd { min-height: 54px; padding: 5px; align-items: center; }
     .cd .chip, .cd .more { display: none; }
     .cd .dots { display: flex; justify-content: center; }
     .chat.big .cd .n { font-size: 13px; }
@@ -455,7 +470,17 @@
     <section class="chat" id="chat" aria-label="Chat with Agent Maya" aria-hidden="true">
       <div class="c-head">
         <div class="c-title">
-          <strong>Agent Maya</strong>
+          <div class="c-name">
+            <strong id="c-title-text">Agent Maya</strong>
+            <span class="cal-arrows">
+              <button class="icon-btn" type="button" onclick="calShift(-1)" aria-label="Previous month">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
+              </button>
+              <button class="icon-btn" type="button" onclick="calShift(1)" aria-label="Next month">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
+              </button>
+            </span>
+          </div>
           <span><i class="dot" id="conn-dot"></i><span id="conn-text">Connecting…</span></span>
         </div>
         <div class="tabs" role="tablist" aria-label="Chat or calendar">
@@ -475,21 +500,12 @@
       <div class="c-body" id="c-body"></div>
 
       <div class="cal" id="cal" role="tabpanel" aria-label="Group calendar">
-        <div class="cal-top">
-          <h3 id="cal-month">Month</h3>
-          <button class="link-btn" type="button" onclick="calToday()">Today</button>
-          <button class="icon-btn" type="button" onclick="calShift(-1)" aria-label="Previous month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
-          </button>
-          <button class="icon-btn" type="button" onclick="calShift(1)" aria-label="Next month">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>
-          </button>
-        </div>
         <div class="cal-legend">
           <span class="k-earnings"><i class="sw"></i>Earnings</span>
-          <span class="k-macro"><i class="sw"></i>Macro (Fed, CPI, jobs)</span>
+          <span class="k-macro"><i class="sw"></i>Macro<span class="legend-more">&nbsp;(Fed, CPI, jobs)</span></span>
           <span class="k-crypto"><i class="sw"></i>Crypto</span>
           <span class="k-other"><i class="sw"></i>Other</span>
+          <button class="today-btn" type="button" onclick="calToday()">Today</button>
         </div>
         <div class="cal-grid" id="cal-grid"></div>
         <div class="cal-day" id="cal-day">
@@ -535,7 +551,7 @@
       <div class="agent-placeholder" aria-hidden="true">
         <span>Your agent photo goes here<br><small>agent.png</small></span>
       </div>
-      <span class="bubble">Hi! I'm Maya,<br>welcome to WorldVest.<br>Click me to talk markets.</span>
+      <span class="bubble">Hi! I'm Maya,<br>Welcome to WorldVest.<br>Click me to talk markets.</span>
     </button>
     </div>
   </div>
@@ -730,7 +746,7 @@
     for (const sym of syms) {
       const w = watchlist[sym] || {}, p = prices[sym] || {};
       const age = p.updatedAt ? `, updated ${Math.round((Date.now() - p.updatedAt) / 60000)}m ago` : '';
-      lines.push(`  ${displaySym(sym)}${w.name ? ` (${w.name})` : ''} [${isCrypto(sym) ? 'crypto' : 'stock'}]: ${fmtPrice(p.price)}, 1D ${fmtPct(p.percent)}${age}`);
+      lines.push(`  ${displaySym(sym)}${displaySym(sym) !== sym ? ` {key ${sym}}` : ''}${w.name ? ` (${w.name})` : ''} [${isCrypto(sym) ? 'crypto' : 'stock'}]: ${fmtPrice(p.price)}, 1D ${fmtPct(p.percent)}${age}`);
     }
     lines.push('', "TODAY'S HEADLINES:");
     if (!headlines.length) lines.push('  (unavailable)');
@@ -848,7 +864,8 @@
         <div class="who">${agent ? (m.daily ? 'Maya · Daily brief' : 'Maya') : esc(m.name || 'Anon')} · ${d.getMonth() + 1}/${d.getDate()}</div>
         <div class="txt">${agent ? renderMarkdown(m.content) : esc(m.content).replace(/\n/g, '<br>')}</div>
         ${agent && Array.isArray(m.cal) && m.cal.length ? `<div class="cal-note">${m.cal.map(c =>
-          c.ok ? `<button type="button" class="k-${esc(c.kind || 'other')}" data-date="${esc(c.date)}"><i class="sw"></i>${esc(c.text)}</button>`
+          c.ok && c.kind === 'watch' ? `<button type="button" class="watch" disabled><i class="sw"></i>${esc(c.text)}</button>`
+          : c.ok ? `<button type="button" class="k-${esc(c.kind || 'other')}" data-date="${esc(c.date)}"><i class="sw"></i>${esc(c.text)}</button>`
                : `<button type="button" class="bad" disabled>${esc(c.text)}</button>`).join('')}</div>` : ''}
       </div>`;
     }).join('');
@@ -954,8 +971,10 @@
 
       // 3) Save the answer to the shared chat
       // Maya's calendar changes ride at the end of her reply; apply them and hide the block
-      const { clean, ops } = extractCalendar(reply);
-      const calNotes = ops.length ? await applyCalendarOps(ops) : [];
+      const { clean: noWl, ops: wlOps } = extractWatchlist(reply);
+      const wlNotes = wlOps.length ? await applyWatchlistOps(wlOps) : [];
+      const { clean, ops } = extractCalendar(noWl);
+      const calNotes = wlNotes.concat(ops.length ? await applyCalendarOps(ops) : []);
       const agentMsg = { role: 'assistant', content: clean || 'Calendar updated.', timestamp: Date.now() };
       if (calNotes.length) agentMsg.cal = calNotes;
       if (connected) {
@@ -1047,8 +1066,7 @@
   function renderCal() {
     const grid = document.getElementById('cal-grid');
     if (!grid) return;
-    document.getElementById('cal-month').textContent =
-      calMonth.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+    calTitle();
     const list = allEvents(), today = todayYmd();
     const first = calMonth, start = addDays(first, -first.getDay());
     const days = new Date(first.getFullYear(), first.getMonth() + 1, 0).getDate();
@@ -1081,11 +1099,18 @@
     msg.textContent = calError || 'Anyone in the group can add or delete events. You can also ask Maya to.';
   }
 
+  function calTitle() {
+    const cal = document.getElementById('chat').classList.contains('cal-mode');
+    document.getElementById('c-title-text').textContent = cal
+      ? calMonth.toLocaleDateString(undefined, { month: window.innerWidth <= 860 ? 'short' : 'long', year: 'numeric' })
+      : 'Agent Maya';
+  }
   function setView(v) {
     const cal = v === 'cal';
     document.getElementById('chat').classList.toggle('cal-mode', cal);
     document.getElementById('tab-chat').setAttribute('aria-selected', String(!cal));
     document.getElementById('tab-cal').setAttribute('aria-selected', String(cal));
+    calTitle();
     if (cal) { ensureEarnings(); renderCal(); }
     else { renderChat(); scrollToLatest(); }
   }
@@ -1098,7 +1123,7 @@
   function calToday() { const t = new Date(); calMonth = new Date(t.getFullYear(), t.getMonth(), 1); calSel = todayYmd(); ensureEarnings(); renderCal(); }
   function showDayPanel() {
     const cal = document.getElementById('cal'), day = document.getElementById('cal-day');
-    if (day.offsetTop + 120 > cal.scrollTop + cal.clientHeight) cal.scrollTo({ top: day.offsetTop - 70, behavior: 'smooth' });
+    if (day.offsetTop + 120 > cal.scrollTop + cal.clientHeight) cal.scrollTo({ top: day.offsetTop - 12, behavior: 'smooth' });
   }
   function calOpenDate(date) {
     const d = parseYmd(date); if (!d) return;
@@ -1164,6 +1189,79 @@
     if (!evs.length) lines.push('  (nothing on the calendar from ' + from + ' to ' + to + ')');
     evs.slice(0, 60).forEach(e => lines.push(`  ${e.date} [${e.kind}${e.auto ? ', auto' : ''}] ${e.title}${e.auto ? '' : ` (added by ${e.addedBy || 'Anon'})`}`));
     return lines.join('\n');
+  }
+
+  // ================= WATCHLIST CHANGES =================
+  // Maya can add or remove tickers with a <watchlist> block. Same "watchlist" node as worldvest.xyz,
+  // so the Render updater starts pricing new symbols on its next cycle.
+  //   add | NVDA | NVIDIA          add | CG:bitcoin | Bitcoin          remove | NVDA
+  function extractWatchlist(reply) {
+    const ops = [];
+    const re = /(?:```[a-z]*\s*)?<watchlist>([\s\S]*?)(?:<\/watchlist>|$)(?:\s*```)?/gi;
+    const clean = String(reply || '').replace(re, (_, body) => {
+      for (let line of body.split('\n')) {
+        line = line.replace(/^\s*[-*•]\s*/, '').trim();
+        const parts = line.split('|').map(x => x.trim());
+        const action = (parts[0] || '').toLowerCase();
+        if ((action === 'add' || action === 'remove' || action === 'delete') && parts[1]) {
+          ops.push({ op: action === 'add' ? 'add' : 'remove', sym: parts[1], name: (parts[2] || '').slice(0, 60) });
+        }
+      }
+      return '';
+    }).trim();
+    return { clean, ops: ops.slice(0, 8) };
+  }
+
+  // Firebase keys can't contain . # $ [ ] /, so tickers like BRK.B are rejected.
+  function normalizeSymbol(raw) {
+    const s = String(raw || '').trim();
+    if (/^CG:/i.test(s)) { const id = s.slice(3).toLowerCase(); return /^[a-z0-9-]{2,60}$/.test(id) ? 'CG:' + id : null; }
+    const t = s.toUpperCase().replace(/^\$/, '');
+    return /^[A-Z0-9-]{1,10}$/.test(t) ? t : null;
+  }
+
+  // Confirm the symbol actually has a price before adding it
+  async function verifySymbol(sym) {
+    try {
+      if (sym.startsWith('CG:')) {
+        const id = sym.slice(3);
+        const r = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(id)}&vs_currencies=usd`);
+        const d = await r.json();
+        return !!(d && d[id] && d[id].usd);
+      }
+      const r = await fetch(`https://finnhub.io/api/v1/quote?symbol=${encodeURIComponent(sym)}&token=${FINNHUB_KEY}`);
+      const q = await r.json();
+      return !!(q && (q.c || q.pc));
+    } catch { return null; } // couldn't check
+  }
+
+  async function applyWatchlistOps(ops) {
+    const notes = [];
+    for (const o of ops) {
+      const sym = normalizeSymbol(o.sym);
+      if (!sym) { notes.push({ ok: false, text: `Skipped "${o.sym}" (not a valid symbol)` }); continue; }
+      const label = sym.startsWith('CG:') ? (o.name || (watchlist[sym] && (watchlist[sym].tickerLabel || watchlist[sym].name)) || sym.slice(3)) : sym;
+      if (o.op === 'add') {
+        if (watchlist[sym]) { notes.push({ ok: false, text: `${label} is already on the watchlist` }); continue; }
+        const ok = await verifySymbol(sym);
+        if (ok === false) { notes.push({ ok: false, text: `Couldn't find a price for ${sym}, not added` }); continue; }
+        const entry = { addedBy: 'Maya', addedAt: Date.now() };
+        if (o.name) entry.name = o.name;
+        try {
+          if (connected) await withTimeout(db.ref('watchlist/' + sym).set(entry), 8000, 'Adding to the watchlist');
+          else { watchlist[sym] = entry; updateTape(); }
+          notes.push({ ok: true, kind: 'watch', text: `Added ${label} to the watchlist` });
+        } catch (err) { notes.push({ ok: false, text: `Couldn't add ${label} (${err.message || err.code})` }); }
+      } else {
+        if (!watchlist[sym]) { notes.push({ ok: false, text: `${label} isn't on the watchlist` }); continue; }
+        try {
+          if (connected) await withTimeout(db.ref('watchlist/' + sym).remove(), 8000, 'Removing from the watchlist');
+          else { delete watchlist[sym]; updateTape(); }
+          notes.push({ ok: true, kind: 'watch', text: `Removed ${label} from the watchlist` });
+        } catch (err) { notes.push({ ok: false, text: `Couldn't remove ${label} (${err.message || err.code})` }); }
+      }
+    }
+    return notes;
   }
 
   // Maya ends a reply with a <calendar> block to add or remove events. Pull it out of the text.
