@@ -353,6 +353,7 @@
   .q .px { color: var(--haze); }
   .q .up { color: var(--up); }
   .q .down { color: var(--down); }
+  .q.macro b { color: var(--brass); }
 
   /* ============ ABOUT ============ */
   main, footer { position: relative; }
@@ -652,9 +653,9 @@
 
   // ================= TICKER TAPE =================
   function renderTape(rows, isSample) {
-    const one = rows.map(([sym, px, pct]) => `
-      <span class="q"><b>${esc(sym)}</b><span class="px">${fmtPrice(px)}</span>
-      <span class="${pct >= 0 ? 'up' : 'down'}">${fmtPct(pct)}</span></span>`).join('');
+    const one = rows.map(([sym, px, pct, macro]) => `
+      <span class="q${macro ? ' macro' : ''}"><b>${esc(sym)}</b><span class="px">${typeof px === 'string' ? esc(px) : fmtPrice(px)}</span>
+      <span class="${pct >= 0 ? 'up' : 'down'}">${typeof pct === 'string' ? esc(pct) : fmtPct(pct)}</span></span>`).join('');
     document.getElementById('tape-track').innerHTML = one + one; // doubled for a seamless loop
   }
   renderTape(SAMPLE, true);
@@ -720,10 +721,29 @@
   }
 
   function updateTape() {
+    const macro = macroBoard.filter(b => b.price != null).map(b => [
+      b.label,
+      b.fmt === 'yield' ? b.price.toFixed(2) + '%' : b.fmt === 'usd' ? '$' + b.price.toFixed(2) : b.price.toFixed(2),
+      b.fmt === 'yield' ? (b.change == null ? '—' : (b.change >= 0 ? '+' : '') + Math.round(b.change * 100) + 'bp') : (Number(b.percent) || 0),
+      true,
+    ]);
     const rows = Object.keys(watchlist)
       .filter(s => prices[s] && prices[s].price)
       .map(s => [displaySym(s), prices[s].price, Number(prices[s].percent) || 0]);
-    if (rows.length) renderTape(rows, false);
+    if (rows.length || macro.length) renderTape(macro.concat(rows), false);
+  }
+
+  // ================= MACRO BOARD + OFFICIAL SCHEDULE (from the Worker) =================
+  let macroBoard = [], macroSchedule = [];
+  async function fetchMacro() {
+    try {
+      const res = await fetch(AGENT_URL.replace(/\/$/, '') + '/macro');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const d = await res.json();
+      macroBoard = Array.isArray(d.board) ? d.board : [];
+      macroSchedule = Array.isArray(d.schedule) ? d.schedule : [];
+      updateTape(); renderCal();
+    } catch (e) { console.warn('macro board failed', e); }
   }
 
   async function fetchHeadlines() {
@@ -1052,10 +1072,20 @@
     }
   }
 
+  // Official CPI / PPI / jobs / FOMC dates. Group events that repeat one of these are hidden.
+  const SCHED_WORDS = { cpi: ['cpi', 'consumer price'], ppi: ['ppi', 'producer price'],
+    jobs: ['jobs', 'payroll', 'nonfarm', 'employment'], fomc: ['fomc', 'fed ', 'rate decision', 'interest rate'] };
+  function scheduleHas(date, title) {
+    const t = ' ' + norm(title) + ' ';
+    return macroSchedule.some(e => e.date === date && (SCHED_WORDS[e.tag] || []).some(w => t.includes(w)));
+  }
   function allEvents() {
-    const group = calEvents.filter(e => parseYmd(e.date) && e.title)
+    const sched = macroSchedule.filter(e => parseYmd(e.date)).map(e => ({
+      id: 'sched-' + e.date + '-' + e.tag, date: e.date, title: e.title, kind: 'macro', auto: true, sched: true,
+    }));
+    const group = calEvents.filter(e => parseYmd(e.date) && e.title && !scheduleHas(e.date, e.title))
       .map(e => ({ ...e, kind: CAL_KINDS[e.kind] ? e.kind : 'other' }));
-    return group.concat(Object.values(earnings));
+    return sched.concat(group, Object.values(earnings));
   }
   const KIND_ORDER = { macro: 0, earnings: 1, crypto: 2, other: 3 };
   function eventsOn(date, list = allEvents()) {
@@ -1091,7 +1121,7 @@
     document.getElementById('cal-day-list').innerHTML = evs.length
       ? `<ul class="cal-list">${evs.map(e => `<li class="ev k-${e.kind}"><div>
           <b>${esc(e.title)}</b>
-          <small>${CAL_KINDS[e.kind]} · ${e.auto ? 'Auto · Finnhub' : 'added by ' + esc(e.addedBy || 'Anon')}${e.detail ? ' · ' + esc(e.detail) : ''}</small>
+          <small>${CAL_KINDS[e.kind]} · ${e.sched ? 'Auto · official schedule' : e.auto ? 'Auto · Finnhub' : 'added by ' + esc(e.addedBy || 'Anon')}${e.detail ? ' · ' + esc(e.detail) : ''}</small>
         </div>${e.auto ? '' : `<button type="button" class="ev-x" data-id="${esc(e.id)}" aria-label="Delete ${esc(e.title)}">✕</button>`}</li>`).join('')}</ul>`
       : '<p class="cal-empty">Nothing on this day yet.</p>';
     const msg = document.getElementById('cal-msg');
@@ -1184,7 +1214,7 @@
     const lines = [`CALENDAR (shared group calendar; today is ${todayYmd()}, ${t.toLocaleDateString('en-US', { weekday: 'long' })}):`];
     if (calError) { lines.push('  (calendar unavailable right now)'); return lines.join('\n'); }
     const from = ymd(addDays(t, -7)), to = ymd(addDays(t, 45));
-    const evs = allEvents().filter(e => e.date >= from && e.date <= to)
+    const evs = allEvents().filter(e => !e.sched && e.date >= from && e.date <= to) // official dates go to Maya from the Worker
       .sort((a, b) => a.date.localeCompare(b.date) || (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]));
     if (!evs.length) lines.push('  (nothing on the calendar from ' + from + ' to ' + to + ')');
     evs.slice(0, 60).forEach(e => lines.push(`  ${e.date} [${e.kind}${e.auto ? ', auto' : ''}] ${e.title}${e.auto ? '' : ` (added by ${e.addedBy || 'Anon'})`}`));
@@ -1298,7 +1328,7 @@
         const n = norm(o.title);
         const dup = eventsOn(o.date).concat(addedNow.filter(a => a.date === o.date))
           .some(e => { const m = norm(e.title); return m === n || m.includes(n) || n.includes(m); });
-        if (dup || !n) continue;
+        if (dup || !n || scheduleHas(o.date, o.title)) continue;
         try {
           await calAdd({ date: o.date, title: o.title, kind: o.kind, addedBy: 'Maya' });
           addedNow.push({ date: o.date, title: o.title });
@@ -1309,7 +1339,8 @@
         const hits = calEvents.filter(e => e.date === o.date && n && (norm(e.title).includes(n) || n.includes(norm(e.title))));
         if (!hits.length) {
           const auto = Object.values(earnings).some(e => e.date === o.date && norm(e.title).includes(n));
-          notes.push({ ok: false, text: auto ? `Auto earnings can't be removed` : `Nothing matching "${o.needle}" on ${fmtShort(o.date)}` });
+          const sched = scheduleHas(o.date, o.needle);
+          notes.push({ ok: false, text: auto || sched ? `Automatic dates can't be removed` : `Nothing matching "${o.needle}" on ${fmtShort(o.date)}` });
           continue;
         }
         for (const h of hits) {
@@ -1333,6 +1364,8 @@
   renderCal();
   applyMaya(store.get('wv_agent_hide_maya') !== '1');
   connect();
+  fetchMacro();
+  setInterval(fetchMacro, 2 * 60 * 1000);
 </script>
 </body>
 </html>
