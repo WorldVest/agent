@@ -45,9 +45,9 @@
   .floor {
     position: fixed; inset: 0; z-index: -1; pointer-events: none;
     background:
-      linear-gradient(180deg, rgba(13,22,38,0.72) 0%, rgba(13,22,38,0.25) 32%, rgba(13,22,38,0.45) 68%, rgba(13,22,38,0.96) 100%),
-      linear-gradient(90deg, rgba(13,22,38,0.7) 0%, rgba(13,22,38,0.15) 60%, transparent 100%),
-      url('worldvest.jpg?v=1') center 40% / cover no-repeat,
+      linear-gradient(180deg, rgba(13,22,38,0.35) 0%, transparent 22%, transparent 62%, rgba(13,22,38,0.55) 100%),
+      linear-gradient(90deg, rgba(13,22,38,0.55) 0%, rgba(13,22,38,0.15) 38%, transparent 55%),
+      url('worldvest.jpg?v=2') center center / cover no-repeat,
       radial-gradient(ellipse 50% 40% at 70% 35%, rgba(201,164,92,0.14), transparent 70%),
       radial-gradient(ellipse 40% 50% at 10% 50%, rgba(46,110,200,0.22), transparent 70%),
       #0b1424;
@@ -89,16 +89,17 @@
   .hero { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
   .hero-body {
     flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
-    padding: clamp(48px, 8vh, 96px) var(--gutter) clamp(56px, 10vh, 120px);
+    padding: clamp(48px, 8vh, 96px) var(--gutter) clamp(32px, 5vh, 56px);
   }
   .hero h2 {
-    font-family: var(--display); font-weight: 400; margin: 0 0 22px; max-width: 13ch;
-    font-size: clamp(48px, 7.2vw, 112px); line-height: 0.98; letter-spacing: -0.03em; text-wrap: balance;
+    font-family: var(--display); font-weight: 400; margin: 0 0 14px; max-width: 16ch;
+    font-size: clamp(36px, 4.4vw, 66px); line-height: 1.02; letter-spacing: -0.02em; text-wrap: balance;
+    text-shadow: 0 2px 24px rgba(5,10,20,0.6);
   }
   .hero h2 em { font-style: italic; color: var(--brass); }
-  .hero .lede { font-size: clamp(18px, 1.6vw, 22px); color: #c8cfdb; margin: 0 0 34px; max-width: 40ch; }
+  .hero .lede { font-size: clamp(16px, 1.3vw, 19px); color: #d3d9e3; margin: 0 0 24px; max-width: 40ch; text-shadow: 0 1px 12px rgba(5,10,20,0.7); }
   .scroll-cue {
-    margin-top: clamp(40px, 8vh, 80px); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+    margin-top: clamp(28px, 5vh, 48px); font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
     color: var(--haze); display: inline-flex; align-items: center; gap: 12px; text-decoration: none; align-self: flex-start;
   }
   .scroll-cue::before { content: ""; width: 40px; height: 1px; background: var(--brass); }
@@ -174,6 +175,7 @@
   /* ============ MOBILE ============ */
   @media (max-width: 860px) {
     .links .text-link { display: none; }
+    .hero-body { background: linear-gradient(180deg, transparent 0%, transparent 52%, rgba(13,22,38,0.7) 72%, rgba(13,22,38,0.8) 100%); padding-top: 120px; }
     .links { gap: 8px; }
     .sec { grid-template-columns: 1fr; gap: 8px; }
     .label { padding-top: 0; }
