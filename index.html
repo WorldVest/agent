@@ -110,10 +110,13 @@
 
   /* ============ SECTIONS: brass label on the left, content on the right ============ */
   main { max-width: 1240px; margin: 0 auto; padding: 0 var(--gutter); }
+  /* The divider line runs only above the content column, not above the section label */
   .sec {
-    display: grid; grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr); gap: clamp(20px, 5vw, 80px);
-    padding: clamp(48px, 7vw, 88px) 0; border-top: 1px solid rgba(236,230,216,0.22);
+    display: grid; grid-template-columns: minmax(0, 0.32fr) minmax(0, 1fr); column-gap: clamp(20px, 5vw, 80px); align-items: start;
   }
+  .sec > * { padding-block: clamp(48px, 7vw, 88px); }
+  .sec > :last-child { border-top: 1px solid rgba(236,230,216,0.22); }
+  .sec > .label { padding-top: calc(clamp(48px, 7vw, 88px) + 14px); }
   .label {
     font-size: clamp(15px, 1.2vw, 17px); letter-spacing: .14em; text-transform: uppercase; color: var(--brass); font-weight: 600;
     line-height: 1.4; padding-top: 14px;
@@ -137,13 +140,16 @@
   }
   .grid3 li { padding: 24px clamp(16px, 2vw, 28px) 28px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   /* How it works: a plain vertical sequence */
-  .sec ol.steps { display: grid; grid-template-columns: 1fr; gap: clamp(28px, 3vw, 40px); border: none; max-width: 640px; }
-  .sec ol.steps li { display: grid; grid-template-columns: 96px 1fr; align-items: baseline; padding: 0; border: none; }
+  /* Steps: titles line up with the other sections' text; the STEP labels hang to the left of them */
+  .sec ol.steps { display: grid; grid-template-columns: 1fr; row-gap: clamp(32px, 3.4vw, 44px); border-left: none; margin: 0; padding: clamp(48px, 7vw, 88px) 0; align-content: start; }
+  .sec ol.steps li { display: grid; grid-template-columns: 96px 1fr; align-items: baseline; padding: 0; border: none; margin-left: -96px; max-width: 760px; }
   .steps .num { font-size: 12px; letter-spacing: .14em; color: var(--brass); font-weight: 600; font-variant-numeric: tabular-nums; }
   .steps li h4 { grid-column: 2; }
   .steps li p { grid-column: 2; }
   .steps h4, .grid3 h4 { font-family: var(--heading); font-weight: 500; font-size: 28px; line-height: 1.1; margin: 0 0 8px; }
   .steps p, .grid3 p { font-size: 16px; margin: 0; }
+  .sec ol.steps h4 { font-size: clamp(28px, 2.6vw, 36px); margin-bottom: 10px; }
+  .sec ol.steps p { font-size: 18px; }
   .grid3 h4 { margin-bottom: 10px; }
 
   /* What we never do */
@@ -184,7 +190,13 @@
     .links .text-link { display: none; }
     .hero-body { background: linear-gradient(180deg, transparent 0%, transparent 52%, rgba(13,22,38,0.7) 72%, rgba(13,22,38,0.8) 100%); padding-top: 120px; }
     .links { gap: 8px; }
-    .sec { grid-template-columns: 1fr; gap: 8px; }
+    .sec { grid-template-columns: 1fr; border-top: 1px solid rgba(236,230,216,0.22); padding: clamp(48px, 7vw, 88px) 0; }
+    .sec > * { padding-block: 0; }
+    .sec > .label { padding-top: 0; }
+    .sec > :last-child { border-top: none; padding-top: 10px; }
+    .sec ol.steps li { margin-left: 0; }
+    .sec ol.steps { padding: 10px 0 0; }
+    .sec ol.steps p { font-size: 17px; }
     .label { padding-top: 0; }
     .steps, .grid3 { grid-template-columns: 1fr; }
     .plain3 { grid-template-columns: 1fr; gap: 24px; }
@@ -298,7 +310,7 @@
 
 <footer>
   <span>© WorldVest 2026</span>
-  <p>WorldVest provides software only and never holds customer funds. Nothing here is financial, legal or tax advice.</p>
+  <p>WorldVest provides software only and never holds customer funds.<br>Nothing here is financial, legal or tax advice.</p>
   <a class="foot-link" href="/desk/">Market desk <span class="arrow">→</span></a>
 </footer>
 
