@@ -196,7 +196,6 @@
   .c-title .dot { display: inline-block; flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--haze); }
   .c-title .dot.live { background: var(--up); box-shadow: 0 0 8px rgba(91,214,160,0.6); }
   .chat.cal-mode .c-title .dot { display: none; }
-  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .icon-btn {
     width: 36px; height: 36px; display: grid; place-items: center; flex-shrink: 0;
     border-radius: 50%; border: 1px solid var(--line); background: transparent; color: var(--haze); cursor: pointer;
@@ -362,9 +361,11 @@
 
   /* ---- News strip under the ticker tape: the 8 newest headlines ---- */
   /* Sits under "Try asking", full width of the About area */
-  .news { grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 40px; }
+  /* News Feed: first thing under the ticker bar, then "A private desk" below it */
+  .news-sec { max-width: 1240px; margin: 0 auto; padding: clamp(150px, 18vw, 260px) clamp(16px, 4vw, 56px) 0; }
+  .news-sec .news { padding-bottom: clamp(64px, 8vw, 104px); border-bottom: 1px solid var(--line); }
   .news-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 20px; }
-  .news-head h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; }
+  .news-head h3 { font-family: var(--display); font-weight: 400; font-size: clamp(32px, 4vw, 48px); line-height: 1.05; letter-spacing: -0.02em; margin: 0; }
   .news-updated { color: var(--haze); font-size: 13px; }
   .news-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-left: 1px solid var(--line); background: rgba(8,14,26,0.55); }
   .news-item {
@@ -381,7 +382,7 @@
     font-size: 15px; line-height: 1.4; font-weight: 500;
     display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
   }
-  .news-empty { color: var(--haze); font-size: 14px; padding: 12px 0; }
+  .news-empty { grid-column: 1 / -1; color: var(--haze); font-size: 14px; padding: 14px 16px; border-right: 1px solid var(--line); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   @media (max-width: 1100px) {
     .news-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .news-grid .news-item:nth-child(-n+4) { border-top: none; }
@@ -413,7 +414,7 @@
   /* ============ ABOUT ============ */
   main, footer { position: relative; }
   .about {
-    padding: clamp(104px, 13vw, 176px) clamp(16px, 4vw, 56px) clamp(64px, 10vw, 128px);
+    padding: clamp(64px, 10vw, 128px) clamp(16px, 4vw, 56px);
     display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
     gap: clamp(32px, 6vw, 96px); max-width: 1240px; margin: 0 auto;
   }
@@ -431,18 +432,6 @@
   .sources dt { color: var(--paper); font-weight: 500; margin-top: 18px; }
   .sources dd { color: #b4bdcc; margin: 4px 0 0; font-size: 15px; }
 
-  .asks {
-    grid-column: 1 / -1; border-top: 1px solid var(--line); padding-top: 40px;
-    display: grid; grid-template-columns: minmax(0, 0.6fr) minmax(0, 1.4fr); gap: 32px; align-items: start;
-  }
-  .asks h3 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; }
-  .ask-list { display: flex; flex-wrap: wrap; gap: 10px; }
-  .ask {
-    background: transparent; color: var(--paper); cursor: pointer;
-    border: 1px solid var(--line); border-radius: 999px; padding: 10px 18px; font-size: 15px; text-align: left;
-    transition: border-color .15s, background .15s;
-  }
-  .ask:hover { border-color: var(--brass); background: var(--brass-soft); }
 
   footer {
     padding: 28px clamp(16px, 4vw, 56px) calc(28px + env(safe-area-inset-bottom, 0px));
@@ -499,7 +488,6 @@
     .chat.big .cal-add input, .chat.big .cal-add select { font-size: 16px; }
     .cal-add input, .cal-add select { font-size: 16px; }
     .about { grid-template-columns: 1fr; }
-    .asks { grid-template-columns: 1fr; gap: 16px; }
   }
 </style>
 </head>
@@ -531,8 +519,7 @@
         <div class="c-title">
           <div class="c-name">
             <strong id="c-title-text">Agent Maya</strong>
-            <i class="dot" id="conn-dot" title="Connecting…"></i><span class="sr-only" id="conn-text">Connecting…</span>
-            <span class="c-sub">Not financial advice</span>
+            <i class="dot" id="conn-dot"></i><span class="c-sub" id="conn-text">Connecting…</span>
             <span class="cal-arrows">
               <button class="icon-btn" type="button" onclick="calShift(-1)" aria-label="Previous month">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>
@@ -622,6 +609,13 @@
 
 <!-- ============ ABOUT ============ -->
 <main>
+  <section class="news-sec" aria-label="News feed">
+    <div class="news">
+      <div class="news-head"><h3>News Feed</h3><span class="news-updated" id="news-updated"></span></div>
+      <div class="news-grid" id="news-grid"></div>
+    </div>
+  </section>
+
   <section class="about" id="about">
     <div>
       <h2>A private desk for a few friends who follow markets</h2>
@@ -645,15 +639,6 @@
       </dl>
     </div>
 
-    <div class="asks">
-      <h3>Try asking</h3>
-      <div class="ask-list" id="ask-list"></div>
-    </div>
-
-    <div class="news" aria-label="News on our tickers">
-      <div class="news-head"><h3>News on our tickers</h3><span class="news-updated" id="news-updated"></span></div>
-      <div class="news-grid" id="news-grid"></div>
-    </div>
   </section>
 </main>
 
@@ -684,16 +669,6 @@
   // Password gate is OFF while previewing. Turned on later.
   const REQUIRE_PASSWORD = false;
 
-  const ASKS = [
-    "What should we watch this week?",
-    "How is our watchlist doing today?",
-    "Why did the market move today?",
-    "Explain a covered call with real numbers",
-    "How big should a single position be?",
-    "Bull and bear case for our biggest holding",
-    "Put this month's Fed, CPI and jobs dates on the calendar",
-  ];
-
   // Shown in the tape only until real prices load
   const SAMPLE = [
     ["AAPL", 258.40, 0.42], ["NVDA", 182.15, 1.87], ["MSFT", 512.30, -0.31], ["TSLA", 431.05, -2.14],
@@ -723,14 +698,6 @@
   }
   renderTape(SAMPLE, true);
 
-  // ================= ASK CHIPS =================
-  document.getElementById('ask-list').innerHTML = ASKS
-    .map(q => `<button class="ask" type="button" data-q="${esc(q)}">${esc(q)}</button>`).join('');
-  document.getElementById('ask-list').addEventListener('click', e => {
-    const b = e.target.closest('.ask');
-    if (b) { openChat(); document.getElementById('input').value = b.dataset.q; send(); }
-  });
-
   // ================= FIREBASE =================
   let db = null;
   let connected = false;
@@ -741,7 +708,6 @@
     connected = ok;
     document.getElementById('conn-dot').classList.toggle('live', ok);
     document.getElementById('conn-text').textContent = text;
-    document.getElementById('conn-dot').title = text; // hover the dot to see the status
   }
 
   function connect() {
@@ -750,7 +716,7 @@
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
       firebase.auth().signInAnonymously().then(() => {
-        setConn(true, 'Online · reads our watchlist');
+        setConn(true, 'Online');
         db.ref('watchlist').on('value', s => {
           const before = Object.keys(watchlist).sort().join();
           watchlist = s.val() || {}; updateTape(); ensureEarnings();
@@ -832,11 +798,11 @@
     } catch (e) { console.warn('headlines failed', e); }
   }
 
-  // ---- News on OUR tickers only ----
+  // ---- News feed: news on OUR tickers only (newest 12) ----
   // Stocks: Finnhub company news per ticker (last 3 days). Crypto: Finnhub crypto news, kept only when
   // the headline names one of our coins. Max 2 stories per ticker so one name can't fill the strip.
   let tickerNews = [], tickerNewsAt = 0, tickerNewsBusy = false;
-  const NEWS_PER_TICKER = 2, NEWS_SHOWN = 8;
+  const NEWS_PER_TICKER = 2, NEWS_SHOWN = 12;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
 
   async function fetchTickerNews() {
@@ -910,7 +876,7 @@
     const grid = document.getElementById('news-grid');
     if (!grid) return;
     if (!tickerNews.length) {
-      const msg = !Object.keys(watchlist).length ? 'News on our tickers shows up here once the watchlist loads.'
+      const msg = !Object.keys(watchlist).length ? 'News shows up here once the watchlist loads.'
         : tickerNewsAt ? 'No news on our tickers in the last 3 days.' : 'Loading news on our tickers…';
       grid.innerHTML = `<div class="news-empty">${msg}</div>`;
       return;
