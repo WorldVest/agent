@@ -4,9 +4,9 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>WorldVest Desk</title>
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=1">
-<link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png?v=1">
-<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png?v=1">
+<link rel="icon" type="image/png" sizes="32x32" href="wv-icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="wv-icon-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="wv-apple-icon.png">
 <meta name="theme-color" content="#0d1626" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -593,9 +593,9 @@
     <!-- The agent: always in her half -->
     <div class="agent-wrap">
     <button class="agent" id="agent" type="button" onclick="openChat()" aria-label="Talk to the WorldVest agent">
-      <img src="agent.png?v=2" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
+      <img src="maya-v3.png" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
       <div class="agent-placeholder" aria-hidden="true">
-        <span>Your agent photo goes here<br><small>agent.png</small></span>
+        <span>Your agent photo goes here<br><small>maya-v3.png</small></span>
       </div>
       <span class="bubble">Hi! I'm Maya,<br>Welcome to WorldVest.<br>Click me to talk markets.</span>
     </button>
@@ -648,8 +648,8 @@
 
 <script>
   // ================= CONFIG =================
-  // Replacing a photo? Upload it with the same name, then bump ?v=2 to ?v=3
-  // for trading-floor.jpg (in the CSS) and agent.png (the img tag) so browsers fetch the new one.
+  // Replacing a photo or icon? Upload it under a NEW file name (e.g. maya-v4.png) and change the
+  // name here in the page. A new name makes every browser fetch it fresh instead of a saved copy.
   const AGENT_URL = "https://maya.thill5523.workers.dev"; // your Cloudflare Worker
   const FINNHUB_KEY = "d7ok9vhr01qsb7bf9bdgd7ok9vhr01qsb7bf9be0";
   const firebaseConfig = {
