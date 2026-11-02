@@ -130,30 +130,7 @@
   .stage.no-maya .agent-wrap { visibility: hidden; pointer-events: none; }
   .agent-wrap { grid-area: agent; min-width: 0; display: flex; justify-content: center; position: relative; }
 
-  /* ---- Two distances: far (default, full body at the edge of the floor) and close (hero size) ---- */
-  .agent { transition: opacity .45s ease, transform .6s cubic-bezier(.2,.7,.2,1), height .45s cubic-bezier(.2,.7,.2,1); transform-origin: 90% 100%; }
-  .stage.flipped .agent { transform-origin: 10% 100%; }
-  .stage.far .agent { opacity: 0; transform: scale(.5); pointer-events: none; }
-  .agent-far {
-    /* Desktop: distance to the page edge is half what it was (side gutter + offset, halved) */
-    position: absolute; bottom: clamp(60px, 10.5vh, 104px); right: calc((clamp(20px, 3vw, 48px) - clamp(16px, 4vw, 56px)) / 2); z-index: 1;
-    height: clamp(328px, 63vh, 594px); aspect-ratio: 432 / 1200;
-    border: none; padding: 0; background: none; cursor: pointer;
-    opacity: 0; pointer-events: none; transform: translateY(10px) scale(1.15); transform-origin: 50% 100%;
-    transition: opacity .4s ease, transform .5s cubic-bezier(.2,.7,.2,1);
-  }
-  .stage.flipped .agent-far { right: auto; left: calc((clamp(20px, 3vw, 48px) - clamp(16px, 4vw, 56px)) / 2); }
-  .stage.far .agent-far { opacity: .95; pointer-events: auto; transform: none; }
-  .agent-far img {
-    width: 100%; height: 100%; object-fit: contain; object-position: bottom center; display: block;
-    filter: drop-shadow(0 14px 22px rgba(0,0,0,0.6));
-    transition: transform .35s cubic-bezier(.2,.7,.2,1), filter .35s;
-  }
-  /* soft shadow where she stands */
-  .agent-far::after {
-    content: ""; position: absolute; left: 10%; right: 10%; bottom: -6px; height: 14px; z-index: -1;
-    background: radial-gradient(ellipse at center, rgba(0,0,0,0.55), transparent 70%);
-  }
+  .agent { transition: height .45s cubic-bezier(.2,.7,.2,1); }
 
   /* ---- The agent ---- */
   .agent {
@@ -193,11 +170,11 @@
     font-size: 15px; font-weight: 500; line-height: 1.35;
     padding: 12px 16px; border-radius: 18px 18px 4px 18px; max-width: none; white-space: nowrap; text-align: left;
     box-shadow: 0 12px 30px rgba(0,0,0,0.35);
-    animation: bubbleIn .6s .5s both cubic-bezier(.2,.7,.2,1);
+    animation: bubbleIn .6s 1s both cubic-bezier(.2,.7,.2,1);
     transition: opacity .25s;
   }
   .stage.flipped .bubble { right: auto; left: 78%; border-radius: 18px 18px 18px 4px; }
-  .stage.chatting .bubble, .stage.far .bubble { animation: none; opacity: 0; visibility: hidden; pointer-events: none; }
+  .stage.chatting .bubble { animation: none; opacity: 0; visibility: hidden; pointer-events: none; }
   @keyframes bubbleIn { from { opacity: 0; transform: translateY(8px) scale(.96); } to { opacity: 1; transform: none; } }
 
   /* ---- Chat panel ---- */
@@ -561,9 +538,6 @@
     .stage.no-maya, .stage.no-maya.flipped { grid-template-columns: 1fr; grid-template-areas: "chat"; }
     .agent { height: min(64vh, 560px); }
     .stage.chatting .agent { height: min(30vh, 260px); }
-    /* Phones: while she's far away her area is shorter, and she stands toward the right */
-    .stage.far .agent { height: min(64vh, 560px); }
-    .agent-far, .stage.flipped .agent-far { left: auto; right: 10%; bottom: 44px; height: min(56vh, 480px); }
     .chat { display: none; height: 70vh; height: 70svh; min-height: 420px; }
     .c-title strong { font-size: 24px; }
     .c-title .dot { width: 8px; height: 8px; }
@@ -642,7 +616,7 @@
     </nav>
   </div>
 
-  <div class="stage far">
+  <div class="stage">
     <!-- Chat: its half stays empty until she is clicked -->
     <section class="chat" id="chat" aria-label="Chat with Agent Maya" aria-hidden="true">
       <div class="c-head">
@@ -734,10 +708,6 @@
 
     <!-- The agent: always in her half -->
     <div class="agent-wrap">
-    <!-- Far Maya: shown first, standing at the edge of the floor. Click to bring her close. -->
-    <button class="agent-far" id="agent-far" type="button" onclick="bringMayaClose()" aria-label="Bring Maya closer">
-      <img src="maya-far-v1.png" alt="Maya standing on the trading floor" onerror="document.querySelector('.stage').classList.remove('far')" />
-    </button>
     <button class="agent" id="agent" type="button" onclick="openChat()" aria-label="Talk to the WorldVest agent">
       <img src="maya-v3.png" alt="The WorldVest agent" onerror="document.getElementById('agent').classList.add('no-photo')" />
       <div class="agent-placeholder" aria-hidden="true">
@@ -1052,7 +1022,6 @@
   // Clicking her opens the chat on the left; she moves over to make room.
   function openChat() {
     const stage = document.querySelector('.stage');
-    stage.classList.remove('far');
     const chat = document.getElementById('chat');
     const already = stage.classList.contains('chatting');
     stage.classList.add('chatting');
@@ -1119,12 +1088,6 @@
     scrollToLatest();
   }
   applyBigText(store.get('wv_agent_bigtext') === '1');
-
-  // Far → close: she steps up to hero size and the greeting bubble appears. Clicking her again opens the chat.
-  function bringMayaClose() {
-    document.querySelector('.stage').classList.remove('far');
-    setTimeout(() => document.getElementById('agent').focus({ preventScroll: true }), 50);
-  }
 
   function closeChat() {
     document.querySelector('.stage').classList.remove('chatting');
